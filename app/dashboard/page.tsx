@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
@@ -37,6 +37,10 @@ const campaigns = [
   ["Content Sprint", "Scheduled", "18 assets"],
   ["Local SEO", "In progress", "42 pages"]
 ];
+
+type TestRecord = {
+  name: string | null;
+};
 
 function Sidebar() {
   return (
@@ -168,15 +172,26 @@ function CampaignPanel() {
 }
 
 export default function DashboardPage() {
+  const [testData, setTestData] = useState<TestRecord[]>([]);
+  const [testError, setTestError] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       const { data, error } = await supabase.from("test").select("*");
       console.log("SUPABASE DATA:", data);
       console.log("SUPABASE ERROR:", error);
+      setTestData((data ?? []) as TestRecord[]);
+      setTestError(Boolean(error));
     };
 
     fetchData();
   }, []);
+
+  const supabaseStatus = testError
+    ? "Supabase connection error"
+    : testData.length > 0
+      ? testData[0]?.name
+      : "No test data found";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] text-white">
@@ -184,6 +199,10 @@ export default function DashboardPage() {
       <Topbar />
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:ml-72 lg:px-8">
         <MetricCards />
+        <section className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
+          <p className="text-sm text-white/[0.55]">Supabase connected</p>
+          <p className="mt-2 text-2xl font-bold">{supabaseStatus}</p>
+        </section>
         <div className="grid gap-6 lg:grid-cols-3">
           <GrowthChart />
           <CampaignPanel />
