@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Activity,
   ArrowRight,
@@ -232,7 +233,11 @@ function Hero() {
             ALYN combines AI agents and human strategy to plan, create, launch, and optimize your growth system — without hiring a marketing team.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button href="#pricing">See How ALYN Would Grow My Business <ArrowRight size={17} /></Button>
+            <Link href="/dashboard">
+              <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
+                Go to Dashboard <ArrowRight size={17} />
+              </button>
+            </Link>
             <Button href="#how-it-works" variant="secondary">How It Works <ChevronRight size={17} /></Button>
           </div>
         </div>
