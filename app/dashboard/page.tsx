@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import {
   BarChart3,
   Bell,
@@ -164,6 +168,16 @@ function CampaignPanel() {
 }
 
 export default function DashboardPage() {
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data, error } = await supabase.from("test").select("*");
+      console.log("SUPABASE DATA:", data);
+      console.log("SUPABASE ERROR:", error);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] text-white">
       <Sidebar />
