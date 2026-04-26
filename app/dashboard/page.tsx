@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 
 const sidebarItems = [
-  { label: "Dashboard", icon: Home, active: true },
-  { label: "Analytics", icon: BarChart3, active: false },
-  { label: "Settings", icon: Settings, active: false }
+  { label: "Dashboard", href: "/dashboard", icon: Home, active: true },
+  { label: "Analytics", href: "#", icon: BarChart3, active: false },
+  { label: "Settings", href: "#", icon: Settings, active: false }
 ];
 
 const metrics = [
@@ -50,10 +50,10 @@ function Sidebar() {
       </div>
 
       <nav className="mt-5 flex gap-2 overflow-x-auto lg:mt-10 lg:flex-col lg:overflow-visible">
-        {sidebarItems.map(({ label, icon: Icon, active }) => (
-          <a
+        {sidebarItems.map(({ label, href, icon: Icon, active }) => (
+          <Link
             key={label}
-            href="#"
+            href={href}
             className={`flex min-h-11 shrink-0 items-center gap-3 rounded-2xl px-4 text-sm font-medium transition ${
               active
                 ? "bg-neon text-white shadow-glow"
@@ -62,7 +62,7 @@ function Sidebar() {
           >
             <Icon size={18} />
             {label}
-          </a>
+          </Link>
         ))}
       </nav>
     </aside>

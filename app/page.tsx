@@ -24,7 +24,13 @@ import {
   Zap
 } from "lucide-react";
 
-const navItems = ["How it works", "Services", "Dashboard", "Pricing"];
+const navItems = [
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Services", href: "#services" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Pricing", href: "/payment" },
+  { label: "About", href: "/about" }
+];
 
 const problems = [
   {
@@ -125,7 +131,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f1a]/75 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <a href="#" className="flex items-center gap-3" aria-label="ALYN AI home">
+        <a href="/" className="flex items-center gap-3" aria-label="ALYN AI home">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-neon shadow-glow">
             <Sparkles size={18} />
           </span>
@@ -133,16 +139,16 @@ function Header() {
         </a>
         <nav className="hidden items-center gap-8 text-sm text-white/70 lg:flex">
           {navItems.map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replaceAll(" ", "-")}`} className="transition hover:text-white">
-              {item}
+            <a key={item.label} href={item.href} className="transition hover:text-white">
+              {item.label}
             </a>
           ))}
         </nav>
         <div className="hidden items-center gap-3 sm:flex">
-          <Button variant="secondary">Login</Button>
-          <Button href="#pricing">Get Free Growth Audit</Button>
+          <Button href="/login" variant="secondary">Login</Button>
+          <Button href="/payment">Get Free Growth Audit</Button>
         </div>
-        <a href="#pricing" className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow sm:hidden">
+        <a href="/payment" className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow sm:hidden">
           Free Audit
         </a>
       </div>
