@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import {
   BarChart3,
@@ -42,6 +44,10 @@ type TestRecord = {
   name: string | null;
 };
 
+type BusinessProfile = {
+  business_name: string | null;
+};
+
 function Sidebar() {
   return (
     <aside className="border-b border-white/10 bg-[#0b0f1a]/75 px-4 py-4 backdrop-blur-xl lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r lg:px-6 lg:py-6">
@@ -77,13 +83,14 @@ function Sidebar() {
   );
 }
 
-function Topbar() {
+function Topbar({ businessName }: { businessName: string }) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f1a]/70 px-4 py-4 backdrop-blur-xl sm:px-6 lg:ml-72 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Dashboard</p>
           <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Growth command center</h1>
+          {businessName ? <p className="mt-1 text-sm text-white/[0.5]">{businessName}</p> : null}
         </div>
         <div className="flex items-center gap-3">
           <button className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.055] text-white/[0.7] transition hover:bg-white/[0.09] hover:text-white">
@@ -172,8 +179,10 @@ function CampaignPanel() {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [testData, setTestData] = useState<TestRecord[]>([]);
   const [testError, setTestError] = useState(false);
+  const [businessName, setBusinessName] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -184,8 +193,35 @@ export default function DashboardPage() {
       setTestError(Boolean(error));
     };
 
-    fetchData();
-  }, []);
+    const loadDashboard = async () => {
+      const { user } = await getCurrentUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("business_profiles")
+        .select("business_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.log("BUSINESS PROFILE ERROR:", profileError);
+      }
+
+      if (!profile) {
+        router.push("/onboarding");
+        return;
+      }
+
+      setBusinessName(((profile as BusinessProfile).business_name ?? "").trim());
+      fetchData();
+    };
+
+    loadDashboard();
+  }, [router]);
 
   const supabaseStatus = testError
     ? "Supabase connection error"
@@ -196,12 +232,13 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] text-white">
       <Sidebar />
-      <Topbar />
+      <Topbar businessName={businessName} />
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:ml-72 lg:px-8">
         <MetricCards />
         <section className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
           <p className="text-sm text-white/[0.55]">Supabase connected</p>
           <p className="mt-2 text-2xl font-bold">{supabaseStatus}</p>
+          {businessName ? <p className="mt-2 text-sm text-white/[0.55]">Business profile: {businessName}</p> : null}
         </section>
         <div className="grid gap-6 lg:grid-cols-3">
           <GrowthChart />

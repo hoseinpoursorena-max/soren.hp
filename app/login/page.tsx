@@ -1,8 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signInOrSignUp } from "@/lib/auth";
 import {
   ArrowRight,
   Facebook,
   KeyRound,
+  type LucideIcon,
   Mail,
   Phone,
   ShieldCheck,
@@ -26,12 +32,16 @@ function Field({
   label,
   placeholder,
   type = "text",
-  icon: Icon
+  icon: Icon,
+  value,
+  onChange
 }: {
   label: string;
   placeholder: string;
   type?: string;
-  icon: typeof Mail;
+  icon: LucideIcon;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
   return (
     <label className="block">
@@ -41,6 +51,8 @@ function Field({
         <input
           type={type}
           placeholder={placeholder}
+          value={value}
+          onChange={(event) => onChange?.(event.target.value)}
           className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/[0.38]"
         />
       </span>
@@ -49,6 +61,28 @@ function Field({
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleEmailAuth = async () => {
+    setAuthMessage("");
+    setIsSubmitting(true);
+
+    const { error } = await signInOrSignUp(email, password);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      setAuthMessage(error.message);
+      return;
+    }
+
+    router.push("/onboarding");
+  };
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] px-4 py-6 text-white sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
@@ -78,7 +112,7 @@ export default function LoginPage() {
         <div className="grid gap-5">
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-5 shadow-glass backdrop-blur-xl sm:p-7">
             <h2 className="text-2xl font-bold">Login or create account</h2>
-            <p className="mt-2 text-sm text-white/[0.55]">Mock authentication UI only. No real sign-in is connected yet.</p>
+            <p className="mt-2 text-sm text-white/[0.55]">Use email and password to access your ALYN workspace.</p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold transition hover:bg-white/[0.09]">
@@ -96,8 +130,8 @@ export default function LoginPage() {
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="space-y-4">
                 <h3 className="font-semibold">Email access</h3>
-                <Field label="Email" placeholder="you@company.com" type="email" icon={Mail} />
-                <Field label="Password" placeholder="••••••••" type="password" icon={KeyRound} />
+                <Field label="Email" placeholder="you@company.com" type="email" icon={Mail} value={email} onChange={setEmail} />
+                <Field label="Password" placeholder="••••••••" type="password" icon={KeyRound} value={password} onChange={setPassword} />
               </div>
               <div className="space-y-4">
                 <h3 className="font-semibold">Mobile access</h3>
@@ -106,10 +140,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Link href="/dashboard" className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
-              Continue to Dashboard
+            {authMessage ? <p className="mt-5 rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm text-white/[0.72]">{authMessage}</p> : null}
+
+            <button onClick={handleEmailAuth} disabled={isSubmitting} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70">
+              {isSubmitting ? "Connecting..." : "Continue to Dashboard"}
               <ArrowRight size={17} />
-            </Link>
+            </button>
           </div>
 
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl sm:p-7">
