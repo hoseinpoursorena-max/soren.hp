@@ -56,7 +56,7 @@ export default function PaymentPage() {
         <Logo />
         <div className="hidden items-center gap-3 sm:flex">
           <Link href="/login" className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/[0.15] bg-white/[0.06] px-4 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
-            Login
+            Continue with Google
           </Link>
           <Link href="/dashboard" className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
             Dashboard

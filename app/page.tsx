@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { signInWithGoogle } from "@/lib/auth";
+import { BrandLogo } from "./BrandLogo";
 import {
   Activity,
   ArrowRight,
@@ -14,7 +18,6 @@ import {
   LineChart,
   Linkedin,
   Megaphone,
-  MessageCircle,
   MousePointer2,
   Rocket,
   Search,
@@ -28,7 +31,6 @@ const navItems = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Services", href: "#services" },
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Pricing", href: "/payment" },
   { label: "About", href: "/about" }
 ];
 
@@ -103,11 +105,13 @@ const tasks = [
 function Button({
   children,
   variant = "primary",
-  href
+  href,
+  onClick
 }: {
   children: React.ReactNode;
   variant?: "primary" | "secondary";
   href?: string;
+  onClick?: () => void;
 }) {
   const classes =
     variant === "primary"
@@ -124,7 +128,15 @@ function Button({
     );
   }
 
-  return <button className={className}>{children}</button>;
+  return <button onClick={onClick} className={className}>{children}</button>;
+}
+
+async function startWithAlyn() {
+  const { error } = await signInWithGoogle();
+
+  if (error) {
+    console.log("GOOGLE LOGIN ERROR", error);
+  }
 }
 
 function Header() {
@@ -132,10 +144,7 @@ function Header() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f1a]/75 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="ALYN AI home">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-neon shadow-glow">
-            <Sparkles size={18} />
-          </span>
-          <span className="text-lg font-bold tracking-wide">ALYN AI</span>
+          <BrandLogo />
         </a>
         <nav className="hidden items-center gap-8 text-sm text-white/70 lg:flex">
           {navItems.map((item) => (
@@ -145,12 +154,12 @@ function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 sm:flex">
-          <Button href="/login" variant="secondary">Login</Button>
-          <Button href="/payment">Get Free Growth Audit</Button>
+          <Button onClick={startWithAlyn} variant="secondary">Continue with Google</Button>
+          <Button onClick={startWithAlyn}>Start with ALYN</Button>
         </div>
-        <a href="/payment" className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow sm:hidden">
-          Free Audit
-        </a>
+        <button onClick={startWithAlyn} className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow sm:hidden">
+          Start
+        </button>
       </div>
     </header>
   );
@@ -239,11 +248,7 @@ function Hero() {
             ALYN combines AI agents and human strategy to plan, create, launch, and optimize your growth system — without hiring a marketing team.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/dashboard">
-              <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
-                Go to Dashboard <ArrowRight size={17} />
-              </button>
-            </Link>
+            <Button onClick={startWithAlyn}>Start with ALYN <ArrowRight size={17} /></Button>
             <Button href="#how-it-works" variant="secondary">How It Works <ChevronRight size={17} /></Button>
           </div>
         </div>
@@ -494,7 +499,7 @@ function OfferSection() {
               </div>
             ))}
             <div className="mt-5">
-              <Button href="#pricing">Show Me My Growth Plan <ArrowRight size={17} /></Button>
+              <Button onClick={startWithAlyn}>Start with ALYN <ArrowRight size={17} /></Button>
             </div>
             <p className="mt-4 text-sm text-white/[0.66]">Limited onboarding spots this month.</p>
             <p className="mt-2 text-sm text-white/[0.55]">We only work with a few businesses at a time to ensure performance.</p>
@@ -510,25 +515,9 @@ function FinalCta() {
     <section className="px-4 py-20 text-center sm:px-6 lg:px-8">
       <h2 className="text-4xl font-bold sm:text-6xl">Ready to stop guessing and start growing?</h2>
       <div className="mt-8">
-        <Button href="#pricing">Show Me My Growth Plan <ArrowRight size={17} /></Button>
+        <Button onClick={startWithAlyn}>Start with ALYN <ArrowRight size={17} /></Button>
       </div>
     </section>
-  );
-}
-
-function FloatingChat() {
-  return (
-    <button className="fixed bottom-5 right-5 z-50 w-[min(22rem,calc(100vw-2.5rem))] rounded-lg border border-white/[0.14] bg-[#11172a]/90 p-4 text-left shadow-glow backdrop-blur-xl transition hover:-translate-y-1 animate-pulseGlow">
-      <div className="flex items-start gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-neon text-white">
-          <MessageCircle size={21} />
-        </span>
-        <div>
-          <p className="font-semibold">Tell me about your business. I’ll show you how to get more customers</p>
-          <p className="mt-1 text-sm text-white/[0.55]">Online now. Audit agent ready.</p>
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -574,7 +563,6 @@ export default function Home() {
       <OfferSection />
       <FinalCta />
       <Footer />
-      <FloatingChat />
     </main>
   );
 }

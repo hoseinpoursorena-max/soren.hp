@@ -1,31 +1,26 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getLatestBusinessProfileForUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import {
   ArrowRight,
-  Building2,
-  Globe,
-  MapPin,
-  Sparkles,
-  Target,
-  Users
+  Send,
+  Sparkles
 } from "lucide-react";
 
-const channels = ["Meta", "Google", "TikTok", "LinkedIn", "SEO", "Content"];
-
-const initialForm = {
-  business_name: "",
-  industry: "",
-  location: "",
-  number_of_employees: "",
-  monthly_marketing_budget: "",
-  main_growth_problem: "",
-  website_url: ""
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
 };
+
+const welcomeMessage =
+  "Hi, I’m ALYN. I’ll help you build your growth workspace. First, I just want to understand your business properly: what you do, where you work, and where growth feels stuck right now.";
+const softOnboardingError =
+  "I caught that. Please send it once more and we’ll keep going.";
 
 function Logo() {
   return (
@@ -38,182 +33,372 @@ function Logo() {
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  icon: Icon,
-  type = "text"
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  icon: typeof Building2;
-  type?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium text-white/[0.72]">{label}</span>
-      <span className="mt-2 flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.055] px-4 text-white/[0.45]">
-        <Icon size={18} className="text-neon" />
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          type={type}
-          placeholder={placeholder}
-          className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/[0.38]"
-        />
-      </span>
-    </label>
-  );
-}
-
 export default function OnboardingPage() {
   const router = useRouter();
-  const [form, setForm] = useState(initialForm);
-  const [preferredChannels, setPreferredChannels] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
+  const [conversationId, setConversationId] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [isWorkspaceReady, setIsWorkspaceReady] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputPlaceholder = isWorkspaceReady
+    ? "Your workspace is ready."
+    : isSending
+    ? "ALYN is analyzing your answer..."
+    : messages.length > 1
+      ? "Reply naturally..."
+      : "Tell ALYN about your business...";
+
+  const resizeTextarea = () => {
+    const el = textareaRef.current;
+
+    if (!el) {
+      return;
+    }
+
+    el.style.height = "auto";
+    const nextHeight = Math.max(56, Math.min(el.scrollHeight, 160));
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > 160 ? "auto" : "hidden";
+  };
+
+  const resetTextarea = () => {
+    const el = textareaRef.current;
+
+    if (!el) {
+      return;
+    }
+
+    el.style.height = "56px";
+    el.style.overflowY = "hidden";
+  };
 
   useEffect(() => {
-    const loadUser = async () => {
-      const { user } = await getCurrentUser();
+    const loadConversation = async () => {
+      setIsLoading(true);
+      setMessage("");
+
+      const { user, error: userError } = await getCurrentUser();
+
+      if (userError) {
+        console.log("ONBOARDING USER FETCH ERROR:", userError);
+        setMessage(softOnboardingError);
+        setIsLoading(false);
+        return;
+      }
 
       if (!user) {
         router.push("/login");
         return;
       }
 
+      const { data: existingProfile, error: profileError } = await getLatestBusinessProfileForUser(user.id);
+
+      if (profileError) {
+        console.log("ONBOARDING PROFILE CHECK ERROR:", profileError);
+        setMessage(softOnboardingError);
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingProfile) {
+        router.push("/dashboard");
+        return;
+      }
+
       setUserId(user.id);
+
+      const { data: existingConversation, error: conversationError } = await supabase
+        .from("ai_conversations")
+        .select("id")
+        .eq("user_id", user.id)
+        .is("business_profile_id", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (conversationError) {
+        console.log("ONBOARDING CONVERSATION FETCH ERROR:", conversationError);
+        setMessage(softOnboardingError);
+        setIsLoading(false);
+        return;
+      }
+
+      let activeConversationId = existingConversation?.id as string | undefined;
+
+      if (!activeConversationId) {
+        const { data: newConversation, error: newConversationError } = await supabase
+          .from("ai_conversations")
+          .insert({
+            user_id: user.id,
+          })
+          .select("id")
+          .single();
+
+        if (newConversationError) {
+          console.log("ONBOARDING CONVERSATION CREATE ERROR:", newConversationError);
+          setMessage(softOnboardingError);
+          setIsLoading(false);
+          return;
+        }
+
+        activeConversationId = newConversation.id;
+      }
+
+      if (!activeConversationId) {
+        setMessage("Could not prepare the onboarding conversation.");
+        setIsLoading(false);
+        return;
+      }
+
+      setConversationId(activeConversationId);
+
+      const { data: fetchedMessages, error: messagesError } = await supabase
+        .from("ai_messages")
+        .select("id, role, content")
+        .eq("user_id", user.id)
+        .eq("conversation_id", activeConversationId)
+        .order("created_at", { ascending: true });
+
+      if (messagesError) {
+        console.log("ONBOARDING MESSAGES FETCH ERROR:", messagesError);
+        setMessage(softOnboardingError);
+        setIsLoading(false);
+        return;
+      }
+
+      if (fetchedMessages && fetchedMessages.length > 0) {
+        setMessages(fetchedMessages as ChatMessage[]);
+        setIsLoading(false);
+        requestAnimationFrame(() => textareaRef.current?.focus());
+        return;
+      }
+
+      const { data: introMessage, error: introError } = await supabase
+        .from("ai_messages")
+        .insert({
+          user_id: user.id,
+          conversation_id: activeConversationId,
+          role: "assistant",
+          content: welcomeMessage,
+        })
+        .select("id, role, content")
+        .single();
+
+      if (introError) {
+        console.log("ONBOARDING INTRO MESSAGE INSERT ERROR:", introError);
+        setMessages([
+          {
+            id: "welcome",
+            role: "assistant",
+            content: welcomeMessage,
+          },
+        ]);
+      } else {
+        setMessages([introMessage as ChatMessage]);
+      }
+
+      setIsLoading(false);
+      requestAnimationFrame(() => textareaRef.current?.focus());
     };
 
-    loadUser();
+    loadConversation();
   }, [router]);
 
-  const updateForm = (key: keyof typeof initialForm, value: string) => {
-    setForm((current) => ({ ...current, [key]: value }));
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isSending]);
 
-  const toggleChannel = (channel: string) => {
-    setPreferredChannels((current) =>
-      current.includes(channel)
-        ? current.filter((item) => item !== channel)
-        : [...current, channel]
-    );
-  };
+  useEffect(() => {
+    resizeTextarea();
+  }, [input]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSend = async () => {
+    const content = input.trim();
+
+    if (!content || isSending || !userId || !conversationId) {
+      return;
+    }
+
     setMessage("");
-    setIsSubmitting(true);
+    setInput("");
+    resetTextarea();
+    setIsSending(true);
+    setIsWorkspaceReady(false);
 
-    if (!userId) {
-      setMessage("Please log in before completing onboarding.");
-      setIsSubmitting(false);
-      router.push("/login");
-      return;
+    const optimisticUserMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content,
+    };
+
+    setMessages((current) => [...current, optimisticUserMessage]);
+
+    try {
+      const response = await fetch("/api/onboarding-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          conversationId,
+          message: content,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("ONBOARDING CHAT RESPONSE", data);
+
+      if (!response.ok) {
+        throw new Error(softOnboardingError);
+      }
+
+      const assistantMessage: ChatMessage = data.assistantMessage ?? {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: data.reply || "I understand. Tell me a little more.",
+      };
+
+      setMessages((current) => {
+        const withoutOptimistic = current.filter((item) => item.id !== optimisticUserMessage.id);
+        const savedUserMessage = data.userMessage ?? optimisticUserMessage;
+        return [...withoutOptimistic, savedUserMessage, assistantMessage];
+      });
+
+      setIsWorkspaceReady(Boolean(data.profileCreated));
+    } catch (error) {
+      console.log("ONBOARDING CHAT ERROR:", error);
+      setMessage(softOnboardingError);
+    } finally {
+      setIsSending(false);
+      requestAnimationFrame(() => {
+        resetTextarea();
+        textareaRef.current?.focus();
+      });
     }
-
-    const { error } = await supabase.from("business_profiles").insert({
-      user_id: userId,
-      ...form,
-      preferred_channels: preferredChannels
-    });
-
-    setIsSubmitting(false);
-
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-
-    router.push("/dashboard");
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] px-4 py-6 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
-        <Logo />
-        <Link href="/dashboard" className="hidden min-h-10 items-center justify-center rounded-full border border-white/[0.15] bg-white/[0.06] px-4 text-sm font-semibold text-white transition hover:bg-white/[0.1] sm:inline-flex">
-          Dashboard
-        </Link>
-      </div>
-
-      <section className="mx-auto grid max-w-7xl items-start gap-10 py-12 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
-        <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-neon">Business onboarding</p>
-          <h1 className="text-4xl font-bold leading-tight sm:text-6xl">Tell ALYN what to grow</h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-white/[0.62]">
-            This profile becomes the foundation for your personalized dashboard, campaigns, orders, AI conversations, and reports.
-          </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {["Business context", "Growth priorities", "Channel focus", "Dashboard personalization"].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.055] p-4">
-                <Target size={19} className="mb-3 text-neon" />
-                <p className="text-sm font-medium">{item}</p>
-              </div>
-            ))}
+    <main className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] text-white">
+      <div className="flex min-h-screen flex-col px-4 py-6 sm:px-6">
+        <div className="mx-auto flex w-full max-w-[720px] items-center justify-between">
+          <Logo />
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs text-white/[0.58] backdrop-blur-xl">
+            <span className={`h-2 w-2 rounded-full ${isSending ? "animate-pulse bg-amber-300" : "bg-emerald-300"}`} />
+            {isSending ? "Analyzing..." : "ALYN is listening..."}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-5 shadow-glass backdrop-blur-xl sm:p-7">
-          <h2 className="text-2xl font-bold">Business profile</h2>
-          <p className="mt-2 text-sm text-white/[0.55]">Saved to Supabase and linked to your logged-in user.</p>
+        <section className="mx-auto flex w-full max-w-[720px] flex-1 flex-col justify-center py-6">
+          <div className="flex min-h-[68vh] flex-col">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-28 pt-6">
+              {isLoading ? (
+                <div className="flex justify-start">
+                  <div className="max-w-[82%] rounded-[24px] border border-white/10 bg-gradient-to-br from-white/[0.11] to-white/[0.045] px-5 py-4 text-sm text-white/[0.68] shadow-glass backdrop-blur-xl">
+                    Preparing ALYN...
+                  </div>
+                </div>
+              ) : null}
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
-            <Field label="Business name" value={form.business_name} onChange={(value) => updateForm("business_name", value)} placeholder="ALYN Studio" icon={Building2} />
-            <Field label="Industry" value={form.industry} onChange={(value) => updateForm("industry", value)} placeholder="SaaS, local service, ecommerce..." icon={Target} />
-            <Field label="Location" value={form.location} onChange={(value) => updateForm("location", value)} placeholder="Berlin, Germany" icon={MapPin} />
-            <Field label="Number of employees" value={form.number_of_employees} onChange={(value) => updateForm("number_of_employees", value)} placeholder="1-10" icon={Users} />
-            <Field label="Monthly marketing budget" value={form.monthly_marketing_budget} onChange={(value) => updateForm("monthly_marketing_budget", value)} placeholder="€2,000" icon={Target} />
-            <Field label="Website URL" value={form.website_url} onChange={(value) => updateForm("website_url", value)} placeholder="https://example.com" icon={Globe} type="url" />
-          </div>
+              {messages.map((chatMessage) => (
+                <div key={chatMessage.id} className={`flex ${chatMessage.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[82%] ${chatMessage.role === "user" ? "items-end" : "items-start"}`}>
+                    {chatMessage.role === "assistant" ? (
+                      <div className="mb-2 flex items-center gap-2 pl-1">
+                        <span className="h-2.5 w-2.5 rounded-full bg-neon shadow-glow" />
+                        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/[0.45]">ALYN</span>
+                      </div>
+                    ) : null}
+                    <div
+                      className={`rounded-[24px] border px-5 py-4 shadow-glass backdrop-blur-xl ${
+                        chatMessage.role === "user"
+                          ? "border-neon/25 bg-gradient-to-br from-neon/30 to-cyan-300/10"
+                          : "border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.045]"
+                      }`}
+                    >
+                      <p className="whitespace-pre-line text-sm leading-6 text-white/[0.84]">{chatMessage.content}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
-          <label className="mt-5 block">
-            <span className="text-sm font-medium text-white/[0.72]">Main growth problem</span>
-            <textarea
-              value={form.main_growth_problem}
-              onChange={(event) => updateForm("main_growth_problem", event.target.value)}
-              placeholder="What is blocking growth right now?"
-              className="mt-2 min-h-32 w-full rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-sm text-white outline-none placeholder:text-white/[0.38] focus:border-neon/60"
-            />
-          </label>
+              {isSending ? (
+                <div className="flex justify-start">
+                  <div className="max-w-[82%]">
+                    <div className="mb-2 flex items-center gap-2 pl-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-neon shadow-glow" />
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/[0.45]">ALYN</span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-[24px] border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.045] px-5 py-4 shadow-glass backdrop-blur-xl">
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-white/55 [animation-delay:-0.2s]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-white/55 [animation-delay:-0.1s]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-white/55" />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
-          <div className="mt-5">
-            <p className="text-sm font-medium text-white/[0.72]">Preferred channels</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {channels.map((channel) => {
-                const selected = preferredChannels.includes(channel);
-
-                return (
+              {isWorkspaceReady ? (
+                <div className="flex justify-start">
                   <button
-                    key={channel}
                     type="button"
-                    onClick={() => toggleChannel(channel)}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                      selected
-                        ? "border-neon bg-neon text-white shadow-glow"
-                        : "border-white/10 bg-white/[0.055] text-white/[0.65] hover:bg-white/[0.09] hover:text-white"
-                    }`}
+                    onClick={() => router.push("/dashboard")}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-br from-neon to-cyan-300 px-5 text-sm font-semibold text-white shadow-glow transition hover:scale-[1.02] hover:shadow-[0_0_34px_rgba(108,99,255,0.45)]"
                   >
-                    {channel}
+                    Open my dashboard
+                    <ArrowRight size={17} />
                   </button>
-                );
-              })}
+                </div>
+              ) : null}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {message ? (
+              <p className="mb-3 rounded-2xl border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-100">
+                {message}
+              </p>
+            ) : null}
+
+            <div className="sticky bottom-0 bg-gradient-to-t from-[#10162a] via-[#10162a]/95 to-transparent pb-2 pt-5">
+              <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.075] px-5 py-[18px] shadow-glass backdrop-blur-xl">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  disabled={isWorkspaceReady}
+                  onChange={(event) => {
+                    setInput(event.target.value);
+                    requestAnimationFrame(resizeTextarea);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={inputPlaceholder}
+                  rows={1}
+                  className="min-h-14 max-h-[160px] flex-1 resize-none bg-transparent text-sm leading-6 text-white outline-none placeholder:text-white/[0.38] disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={isSending || isWorkspaceReady || !input.trim()}
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-neon to-cyan-300 text-white shadow-glow transition hover:scale-105 hover:shadow-[0_0_34px_rgba(108,99,255,0.45)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                  aria-label="Send message"
+                >
+                  <Send size={18} />
+                </button>
+              </div>
             </div>
           </div>
-
-          {message ? <p className="mt-5 rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm text-white/[0.72]">{message}</p> : null}
-
-          <button disabled={isSubmitting} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70">
-            {isSubmitting ? "Saving profile..." : "Continue to Dashboard"}
-            <ArrowRight size={17} />
-          </button>
-        </form>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

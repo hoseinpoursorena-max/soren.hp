@@ -53,7 +53,7 @@ export default function AboutPage() {
             Pricing
           </Link>
           <Link href="/login" className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
-            Login
+            Continue with Google
           </Link>
         </div>
       </div>

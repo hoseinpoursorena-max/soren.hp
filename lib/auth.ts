@@ -1,19 +1,25 @@
 import { supabase } from "@/lib/supabase";
 
-export async function signInOrSignUp(email: string, password: string) {
-  const signInResult = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+export async function signInWithGoogle() {
+  const redirectTo =
+    typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
 
-  if (!signInResult.error) {
-    return signInResult;
-  }
-
-  return supabase.auth.signUp({
-    email,
-    password
+  return supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo
+    }
   });
+}
+
+export async function getLatestBusinessProfileForUser(userId: string) {
+  return supabase
+    .from("business_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 }
 
 export async function getCurrentUser() {
