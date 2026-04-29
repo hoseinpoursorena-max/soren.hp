@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import { BrandLogo } from "../BrandLogo";
 import {
@@ -20,14 +22,6 @@ import {
   Users,
   Zap
 } from "lucide-react";
-
-const sidebarItems = [
-  { label: "Overview", value: "overview", icon: Home },
-  { label: "Reports", value: "reports", icon: BarChart3 },
-  { label: "Billing", value: "billing", icon: ReceiptText },
-  { label: "Settings", value: "settings", icon: Settings },
-  { label: "Growth Store", href: "/dashboard/store", icon: Zap }
-];
 
 const ADMIN_EMAILS = ["hoseinpour.sorena@gmail.com"];
 
@@ -855,16 +849,41 @@ function FormattedMessage({ content }: { content: string }) {
   );
 }
 
-function Sidebar({ activeTab, onTabChange }: { activeTab: DashboardTab; onTabChange: (tab: DashboardTab) => void }) {
+function Sidebar({
+  activeTab,
+  onTabChange,
+  labels,
+  language,
+  onLanguageChange
+}: {
+  activeTab: DashboardTab;
+  onTabChange: (tab: DashboardTab) => void;
+  labels: { overview: string; reports: string; billing: string; settings: string; growthStore: string; liveSystem: string };
+  language: "de" | "en";
+  onLanguageChange: (language: "de" | "en") => void;
+}) {
+  const sidebarItems = [
+    { label: labels.overview, value: "overview", icon: Home },
+    { label: labels.reports, value: "reports", icon: BarChart3 },
+    { label: labels.billing, value: "billing", icon: ReceiptText },
+    { label: labels.settings, value: "settings", icon: Settings },
+    { label: labels.growthStore, href: "/dashboard/store", icon: Zap }
+  ];
+
   return (
     <aside className="border-b border-white/10 bg-[#0b0f1a]/75 px-4 py-4 backdrop-blur-xl lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r lg:px-6 lg:py-6">
       <div className="flex items-center justify-between gap-4 lg:block">
         <Link href="/" className="flex items-center gap-3" aria-label="ALYN AI home">
           <BrandLogo />
         </Link>
-        <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200 lg:mt-8 lg:inline-flex">
-          Live system
-        </span>
+        <div className="flex items-center gap-2 lg:mt-8 lg:block">
+          <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200 lg:inline-flex">
+            {labels.liveSystem}
+          </span>
+          <div className="mt-0 lg:mt-3">
+            <LanguageSwitcher language={language} onChange={onLanguageChange} />
+          </div>
+        </div>
       </div>
 
       <nav className="mt-5 flex gap-2 overflow-x-auto lg:mt-10 lg:flex-col lg:overflow-visible">
@@ -900,13 +919,21 @@ function Sidebar({ activeTab, onTabChange }: { activeTab: DashboardTab; onTabCha
   );
 }
 
-function Topbar({ businessName, onLogout }: { businessName: string; onLogout: () => void }) {
+function Topbar({
+  businessName,
+  onLogout,
+  labels
+}: {
+  businessName: string;
+  onLogout: () => void;
+  labels: { dashboard: string; commandCenter: string; logout: string; user: string };
+}) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f1a]/70 px-4 py-4 backdrop-blur-xl sm:px-6 lg:ml-72 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Dashboard</p>
-          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Growth command center</h1>
+          <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">{labels.dashboard}</p>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{labels.commandCenter}</h1>
           {businessName ? <p className="mt-1 text-sm text-white/[0.5]">{businessName}</p> : null}
         </div>
         <div className="flex items-center gap-3">
@@ -917,10 +944,10 @@ function Topbar({ businessName, onLogout }: { businessName: string; onLogout: ()
             <span className="grid h-8 w-8 place-items-center rounded-full bg-neon text-white">
               <User size={16} />
             </span>
-            <span className="hidden text-sm font-semibold sm:inline">{businessName || "User"}</span>
+            <span className="hidden text-sm font-semibold sm:inline">{businessName || labels.user}</span>
           </button>
           <button onClick={onLogout} className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
-            Logout
+            {labels.logout}
           </button>
         </div>
       </div>
@@ -928,7 +955,7 @@ function Topbar({ businessName, onLogout }: { businessName: string; onLogout: ()
   );
 }
 
-function MetricCards({ reports }: { reports: CampaignReport[] }) {
+function MetricCards({ reports, labels }: { reports: CampaignReport[]; labels: { leads: string; conversionRate: string; revenue: string; activeCampaigns: string; realData: string } }) {
   const totals = reports.reduce(
     (acc, report) => {
       const clicks = Number(report.clicks ?? 0);
@@ -944,10 +971,10 @@ function MetricCards({ reports }: { reports: CampaignReport[] }) {
   );
   const conversionRate = totals.clicks > 0 ? (totals.conversions / totals.clicks) * 100 : 0;
   const metrics = [
-    { label: "Leads", value: String(totals.conversions), icon: Users },
-    { label: "Conversion rate", value: `${conversionRate.toFixed(1)}%`, icon: TrendingUp },
-    { label: "Revenue", value: `€${totals.revenue.toLocaleString()}`, icon: CircleDollarSign },
-    { label: "Active campaigns", value: String(totals.campaigns.size), icon: Megaphone }
+    { label: labels.leads, value: String(totals.conversions), icon: Users },
+    { label: labels.conversionRate, value: `${conversionRate.toFixed(1)}%`, icon: TrendingUp },
+    { label: labels.revenue, value: `€${totals.revenue.toLocaleString()}`, icon: CircleDollarSign },
+    { label: labels.activeCampaigns, value: String(totals.campaigns.size), icon: Megaphone }
   ];
 
   return (
@@ -958,7 +985,7 @@ function MetricCards({ reports }: { reports: CampaignReport[] }) {
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-neon/[0.15] text-neon">
               <Icon size={22} />
             </span>
-            <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-medium text-white/[0.58]">Real data</span>
+            <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-medium text-white/[0.58]">{labels.realData}</span>
           </div>
           <p className="text-sm text-white/[0.55]">{label}</p>
           <p className="mt-2 text-3xl font-bold">{value}</p>
@@ -1100,6 +1127,69 @@ function GeneralUpdateSection({ reports }: { reports: ServiceReport[] }) {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { language, setLanguage } = useAppLanguage("de");
+  const t = {
+    de: {
+      overview: "Übersicht",
+      reports: "Reports",
+      billing: "Abrechnung",
+      settings: "Einstellungen",
+      growthStore: "Growth Store",
+      liveSystem: "Live-System",
+      dashboard: "Dashboard",
+      commandCenter: "Wachstumszentrale",
+      logout: "Abmelden",
+      user: "Nutzer",
+      leads: "Leads",
+      conversionRate: "Conversion-Rate",
+      revenue: "Umsatz",
+      activeCampaigns: "Aktive Kampagnen",
+      realData: "Echtdaten",
+      businessProfile: "Unternehmensprofil",
+      industry: "Branche",
+      location: "Standort",
+      budget: "Budget",
+      notSet: "Nicht gesetzt",
+      aiAssistant: "AI Growth Assistant",
+      aiPlaceholder: "Beschreibe ALYN, was dein Wachstum gerade blockiert...",
+      askAlyn: "ALYN fragen",
+      askingAlyn: "ALYN denkt nach...",
+      thinking: "ALYN denkt nach...",
+      notesUpdates: "Kunden-Notizen / Updates",
+      noUpdates: "Noch keine Updates.",
+      completedUpdate: "Abgeschlossenes Update"
+    },
+    en: {
+      overview: "Overview",
+      reports: "Reports",
+      billing: "Billing",
+      settings: "Settings",
+      growthStore: "Growth Store",
+      liveSystem: "Live system",
+      dashboard: "Dashboard",
+      commandCenter: "Growth command center",
+      logout: "Logout",
+      user: "User",
+      leads: "Leads",
+      conversionRate: "Conversion rate",
+      revenue: "Revenue",
+      activeCampaigns: "Active campaigns",
+      realData: "Real data",
+      businessProfile: "Business profile",
+      industry: "Industry",
+      location: "Location",
+      budget: "Budget",
+      notSet: "Not set",
+      aiAssistant: "AI Growth Assistant",
+      aiPlaceholder: "Tell ALYN what is blocking your growth...",
+      askAlyn: "Ask ALYN",
+      askingAlyn: "Asking ALYN...",
+      thinking: "ALYN is thinking...",
+      notesUpdates: "Customer Notes / Updates",
+      noUpdates: "No updates yet.",
+      completedUpdate: "Completed update"
+    }
+  }[language];
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [reportPlatformFilter, setReportPlatformFilter] = useState<ReportPlatformFilter>("All");
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
@@ -1125,12 +1215,19 @@ export default function DashboardPage() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const shouldAutoScrollMessagesRef = useRef(false);
   const aiAssistantSectionRef = useRef<HTMLElement | null>(null);
+  const hasInitializedDashboardRef = useRef(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
 
   useEffect(() => {
+    if (hasInitializedDashboardRef.current) {
+      return;
+    }
+
+    hasInitializedDashboardRef.current = true;
+
     const loadDashboard = async () => {
       const { user, error: userError } = await getCurrentUser();
 
@@ -1721,23 +1818,23 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] text-white">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <Topbar businessName={businessName} onLogout={handleLogout} />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} labels={t} language={language} onLanguageChange={setLanguage} />
+      <Topbar businessName={businessName} onLogout={handleLogout} labels={t} />
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:ml-72 lg:px-8">
         {activeTab === "overview" ? (
           <>
-            <MetricCards reports={campaignReports} />
+            <MetricCards reports={campaignReports} labels={t} />
             <section className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
-              <p className="text-sm text-white/[0.55]">Business profile</p>
+              <p className="text-sm text-white/[0.55]">{t.businessProfile}</p>
               <p className="mt-2 text-2xl font-bold">{businessProfile?.business_name}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <p className="text-sm text-white/[0.55]">Industry: {businessProfile?.industry || "Not set"}</p>
-                <p className="text-sm text-white/[0.55]">Location: {businessProfile?.location || "Not set"}</p>
-                <p className="text-sm text-white/[0.55]">Budget: {businessProfile?.monthly_marketing_budget || "Not set"}</p>
+                <p className="text-sm text-white/[0.55]">{t.industry}: {businessProfile?.industry || t.notSet}</p>
+                <p className="text-sm text-white/[0.55]">{t.location}: {businessProfile?.location || t.notSet}</p>
+                <p className="text-sm text-white/[0.55]">{t.budget}: {businessProfile?.monthly_marketing_budget || t.notSet}</p>
               </div>
             </section>
             <section ref={aiAssistantSectionRef} className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
-              <h2 className="text-xl font-semibold">AI Growth Assistant</h2>
+              <h2 className="text-xl font-semibold">{t.aiAssistant}</h2>
               <div className="mt-5 max-h-[360px] space-y-3 overflow-y-auto pr-1">
                 {messages.map((message) => (
                   <div key={message.id} className={`rounded-2xl border p-4 ${message.role === "user" ? "border-neon/30 bg-neon/[0.12]" : "border-white/10 bg-white/[0.045]"}`}>
@@ -1747,7 +1844,7 @@ export default function DashboardPage() {
                 ))}
                 {isThinking ? (
                   <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-                    <p className="text-sm text-white/[0.62]">ALYN is thinking...</p>
+                    <p className="text-sm text-white/[0.62]">{t.thinking}</p>
                   </div>
                 ) : null}
                 {aiError ? (
@@ -1768,22 +1865,22 @@ export default function DashboardPage() {
                     handleAskAlyn();
                   }
                 }}
-                placeholder="Tell ALYN what is blocking your growth..."
+                placeholder={t.aiPlaceholder}
                 className="mt-5 min-h-28 w-full rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-sm text-white outline-none placeholder:text-white/[0.38] focus:border-neon/60"
               />
               <button onClick={handleAskAlyn} disabled={isAsking} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70">
-                {isAsking ? "Asking ALYN..." : "Ask ALYN"}
+                {isAsking ? t.askingAlyn : t.askAlyn}
               </button>
             </section>
             <section className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
-              <h2 className="text-xl font-semibold">Customer Notes / Updates</h2>
+              <h2 className="text-xl font-semibold">{t.notesUpdates}</h2>
               <div className="mt-4 space-y-3">
                 {customerUpdates.length > 0 ? customerUpdates.map((update) => (
                   <div key={update.id} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-                    <p className="text-sm font-semibold">{update.title || "Completed update"}</p>
-                    <p className="mt-1 text-xs text-white/[0.45]">{update.completed_at || update.created_at ? new Date(update.completed_at || update.created_at || "").toLocaleDateString() : "No date"}</p>
+                    <p className="text-sm font-semibold">{update.title || t.completedUpdate}</p>
+                    <p className="mt-1 text-xs text-white/[0.45]">{update.completed_at || update.created_at ? new Date(update.completed_at || update.created_at || "").toLocaleDateString() : t.notSet}</p>
                   </div>
-                )) : <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.55]">No updates yet.</p>}
+                )) : <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.55]">{t.noUpdates}</p>}
               </div>
             </section>
           </>

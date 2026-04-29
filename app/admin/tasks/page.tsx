@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, CalendarDays, ClipboardList, LayoutGrid, Plus, Sparkles, Table2, Timer } from "lucide-react";
 
@@ -116,6 +117,39 @@ const priorityClassName = (priority?: string | null) => {
 
 export default function AdminTasksPage() {
   const router = useRouter();
+  const { language } = useAppLanguage("de");
+  const t = {
+    de: {
+      back: "Zurück",
+      noDueDate: "Kein Fälligkeitsdatum",
+      noAssignees: "Noch keine Zuständigen",
+      noTasks: "Keine Aufgaben",
+      noCustomer: "Kein Kunde",
+      noProject: "Kein Projekt",
+      noPriority: "Keine Priorität",
+      general: "Allgemein",
+      createTask: "Aufgabe erstellen",
+      createTaskCopy: "Füge eine echte Umsetzungsaufgabe zur Work OS hinzu.",
+      close: "Schließen",
+      creating: "Wird erstellt...",
+      headings: ["Titel", "Kunde", "Projekt", "Status", "Priorität", "Typ", "Fälligkeitsdatum"]
+    },
+    en: {
+      back: "Back",
+      noDueDate: "No due date",
+      noAssignees: "No assignees yet",
+      noTasks: "No tasks",
+      noCustomer: "No customer",
+      noProject: "No project",
+      noPriority: "No priority",
+      general: "General",
+      createTask: "Create Task",
+      createTaskCopy: "Add a real execution task to the Work OS.",
+      close: "Close",
+      creating: "Creating...",
+      headings: ["Title", "Customer", "Project", "Status", "Priority", "Type", "Due date"]
+    }
+  }[language];
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -538,7 +572,7 @@ export default function AdminTasksPage() {
         </Link>
         <Link href="/admin" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
           <ArrowLeft size={16} />
-          Back
+          {t.back}
         </Link>
       </div>
 
@@ -622,7 +656,7 @@ export default function AdminTasksPage() {
                         ))
                       ) : (
                         <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs text-white/[0.42]">
-                          No tasks
+                          {t.noTasks}
                         </p>
                       )}
                       {provided.placeholder}
@@ -653,7 +687,7 @@ export default function AdminTasksPage() {
           <div className="space-y-4">
             {Object.entries(timelineGroups).map(([date, group]) => (
               <div key={date} className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass">
-                <h2 className={`text-sm font-semibold ${date !== "No due date" && isOverdue(group[0]?.due_date) ? "text-red-100" : "text-white"}`}>{date}</h2>
+                <h2 className={`text-sm font-semibold ${date !== "No due date" && isOverdue(group[0]?.due_date) ? "text-red-100" : "text-white"}`}>{date === "No due date" ? t.noDueDate : date}</h2>
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {group.map((task) => (
                     <div key={task.id} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
@@ -671,7 +705,7 @@ export default function AdminTasksPage() {
         <section className="mx-auto grid max-w-7xl gap-4 pb-10 md:grid-cols-2 xl:grid-cols-4">
           {Object.entries(calendarGroups).map(([date, group]) => (
             <div key={date} className="rounded-3xl border border-white/10 bg-white/[0.055] p-4 shadow-glass">
-              <h2 className={`text-sm font-semibold ${date !== "No due date" && isOverdue(group[0]?.due_date) ? "text-red-100" : "text-white"}`}>{date}</h2>
+              <h2 className={`text-sm font-semibold ${date !== "No due date" && isOverdue(group[0]?.due_date) ? "text-red-100" : "text-white"}`}>{date === "No due date" ? t.noDueDate : date}</h2>
               <div className="mt-4 space-y-3">
                 {group.map((task) => (
                   <div key={task.id} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
@@ -690,7 +724,7 @@ export default function AdminTasksPage() {
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead className="border-b border-white/10 text-xs uppercase tracking-[0.18em] text-white/[0.45]">
                 <tr>
-                  {["Title", "Customer", "Project", "Status", "Priority", "Type", "Due date"].map((heading) => (
+                  {t.headings.map((heading) => (
                     <th key={heading} className="px-4 py-4 font-semibold">{heading}</th>
                   ))}
                 </tr>
@@ -699,12 +733,12 @@ export default function AdminTasksPage() {
                 {tasks.map((task) => (
                   <tr key={task.id} className="border-b border-white/10 last:border-0">
                     <td className="px-4 py-4 font-semibold text-white"><Link href={`/admin/tasks/${task.id}`}>{task.title || "Untitled task"}</Link></td>
-                    <td className="px-4 py-4 text-white/[0.62]">{task.business_profile_id ? customerNames[task.business_profile_id] || task.business_profile_id : "No customer"}</td>
-                    <td className="px-4 py-4 text-white/[0.62]">{task.project_id ? projectNames[task.project_id] || task.project_id : "No project"}</td>
+                    <td className="px-4 py-4 text-white/[0.62]">{task.business_profile_id ? customerNames[task.business_profile_id] || task.business_profile_id : t.noCustomer}</td>
+                    <td className="px-4 py-4 text-white/[0.62]">{task.project_id ? projectNames[task.project_id] || task.project_id : t.noProject}</td>
                     <td className="px-4 py-4 text-white/[0.62]">{getTaskStatus(task.status)}</td>
-                    <td className="px-4 py-4 text-white/[0.62]">{task.priority || "No priority"}</td>
-                    <td className="px-4 py-4 text-white/[0.62]">{task.task_type || "General"}</td>
-                    <td className={`px-4 py-4 ${isOverdue(task.due_date) ? "text-red-100" : "text-white/[0.62]"}`}>{formatDate(task.due_date)}</td>
+                    <td className="px-4 py-4 text-white/[0.62]">{task.priority || t.noPriority}</td>
+                    <td className="px-4 py-4 text-white/[0.62]">{task.task_type || t.general}</td>
+                    <td className={`px-4 py-4 ${isOverdue(task.due_date) ? "text-red-100" : "text-white/[0.62]"}`}>{task.due_date ? new Date(task.due_date).toLocaleDateString() : t.noDueDate}</td>
                   </tr>
                 ))}
               </tbody>
@@ -718,16 +752,16 @@ export default function AdminTasksPage() {
           <form onSubmit={handleCreateTask} className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[#11172a] p-6 shadow-glass">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold">Create Task</h2>
-                <p className="mt-1 text-sm text-white/[0.55]">Add a real execution task to the Work OS.</p>
+                <h2 className="text-xl font-semibold">{t.createTask}</h2>
+                <p className="mt-1 text-sm text-white/[0.55]">{t.createTaskCopy}</p>
               </div>
-              <button type="button" onClick={() => setIsCreateOpen(false)} className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm text-white/[0.72]">Close</button>
+              <button type="button" onClick={() => setIsCreateOpen(false)} className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm text-white/[0.72]">{t.close}</button>
             </div>
             {createError ? <p className="mb-4 text-sm text-red-100">{createError}</p> : null}
             <div className="grid gap-4 md:grid-cols-2">
               <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
               <select value={form.business_profile_id} onChange={(e) => setForm({ ...form, business_profile_id: e.target.value })} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none">
-                <option value="">No customer</option>
+                <option value="">{t.noCustomer}</option>
                 {customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name || customer.id}</option>)}
               </select>
               <select value={form.project_id} onChange={(e) => {
@@ -744,7 +778,7 @@ export default function AdminTasksPage() {
                   business_profile_id: selectedProject?.business_profile_id || form.business_profile_id || "",
                 });
               }} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none">
-                <option value="">No project</option>
+                <option value="">{t.noProject}</option>
                 {projects.map((project) => <option key={project.id} value={project.id}>{project.name || project.title || project.id}</option>)}
               </select>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none">
@@ -778,13 +812,13 @@ export default function AdminTasksPage() {
                     ))}
                   </select>
                 ) : (
-                  <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 text-sm text-white/[0.55]">No assignees yet</p>
+                  <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 text-sm text-white/[0.55]">{t.noAssignees}</p>
                 )}
               </label>
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" className="min-h-28 rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none md:col-span-2" />
             </div>
             <button disabled={isCreatingTask} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow disabled:opacity-70">
-              {isCreatingTask ? "Creating..." : "Create Task"}
+              {isCreatingTask ? t.creating : t.createTask}
             </button>
           </form>
         </div>

@@ -45,6 +45,7 @@ export default function OnboardingPage() {
   const [isWorkspaceReady, setIsWorkspaceReady] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const hasInitializedConversationRef = useRef(false);
   const inputPlaceholder = isWorkspaceReady
     ? "Your workspace is ready."
     : isSending
@@ -78,6 +79,12 @@ export default function OnboardingPage() {
   };
 
   useEffect(() => {
+    if (hasInitializedConversationRef.current) {
+      return;
+    }
+
+    hasInitializedConversationRef.current = true;
+
     const loadConversation = async () => {
       setIsLoading(true);
       setMessage("");

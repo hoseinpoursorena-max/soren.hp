@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import {
   ArrowLeft,
@@ -160,6 +161,173 @@ const getOrderTitle = (order: ServiceOrder) => order.service_name || order.title
 export default function CustomerDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { language } = useAppLanguage("de");
+  const t = {
+    de: {
+      back: "Zurück",
+      customer: "Kunde",
+      customerProfile: "Kundenprofil",
+      customerTitleCopy: "Interne Kundendetails, Intelligence, Aufträge und Operator-Notizen.",
+      customerOverview: "Kundenübersicht",
+      business: "Unternehmen",
+      industry: "Branche",
+      location: "Standort",
+      budget: "Budget",
+      notSet: "Nicht gesetzt",
+      aiIntelligence: "AI Intelligence",
+      summary: "Zusammenfassung",
+      risks: "Risiken",
+      opportunities: "Chancen",
+      nextActions: "Nächste Schritte",
+      stage: "Phase",
+      customerMood: "Kundenstimmung",
+      riskLevel: "Risikostufe",
+      recommendedNextAction: "Empfohlene nächste Aktion",
+      pendingTasks: "Offene Aufgaben",
+      generateReport: "AI-Report erstellen",
+      regenerating: "Erneut erstellen...",
+      regenerateReport: "AI-Report neu erstellen",
+      generateBoth: "Admin- und Kundenreports erstellen",
+      generatingReports: "Reports werden erstellt...",
+      followUp: "Follow-up Intelligence",
+      followUpCopy: "Nur interne Admin-Einblicke. ALYN kontaktiert den Kunden nicht.",
+      analyzeFollowUp: "Follow-up-Bedarf analysieren",
+      analyzing: "Analysiere...",
+      followUpNeeded: "Follow-up nötig",
+      reason: "Grund",
+      urgency: "Dringlichkeit",
+      recommendedChannel: "Empfohlener Kanal",
+      recommendedTone: "Empfohlener Ton",
+      suggestedAdminAction: "Empfohlene Admin-Aktion",
+      suggestedMessage: "Nachrichtenvorschlag",
+      customerPersonalityRead: "Persönlichkeitseinschätzung",
+      salesRisk: "Verkaufsrisiko",
+      offerStrategy: "Angebotsstrategie",
+      followUpFooter: "Diese Empfehlung ist nur für Admins. Sie sendet nichts und plant keinen Kundenkontakt automatisch.",
+      noFollowUp: "Noch keine Follow-up-Analyse.",
+      strategyChat: "Admin Strategy Chat",
+      strategyCopy: "Interne Admin-Strategie mit ALYN für diesen Kunden.",
+      strategyPlaceholder: "Frag ALYN nach Sales-Strategie, Risiken, Preisansatz oder dem nächsten sinnvollen Schritt...",
+      sendToAlyn: "An ALYN senden",
+      sending: "Sende...",
+      customerTasks: "Kundenaufgaben",
+      customerTasksCopy: "Nur Aufgaben dieses Kunden.",
+      createTaskForCustomer: "Aufgabe für diesen Kunden erstellen",
+      activeOrders: "Aktive Aufträge",
+      notes: "Notizen",
+      notesCopy: "Kurzer interner Speicher, geteilt zwischen Admin und ALYN.",
+      addSharedNote: "Geteilte Notiz hinzufügen",
+      adding: "Wird hinzugefügt...",
+      noActiveOrders: "Noch keine aktiven Aufträge.",
+      noSharedNotes: "Noch keine geteilten Notizen. Füge eine kurze Erkenntnis für ALYN und das Admin-Team hinzu.",
+      noTasks: "Keine Aufgaben",
+      noAssignees: "Noch keine Zuständigen",
+      noDate: "Kein Datum",
+      due: "Fällig",
+      project: "Projekt",
+      status: "Status",
+      created: "Erstellt",
+      package: "Paket",
+      price: "Preis",
+      addNotePlaceholder: "Füge eine kurze Notiz für ALYN und das Admin-Team hinzu...",
+      createTaskHeading: "Aufgabe für diesen Kunden erstellen",
+      preselectedCustomer: "ist vorausgewählt.",
+      close: "Schließen",
+      title: "Titel",
+      noProject: "Kein Projekt",
+      priority: "Priorität",
+      taskType: "Aufgabentyp",
+      visibility: "Sichtbarkeit",
+      assignees: "Zuständige",
+      description: "Beschreibung",
+      createTask: "Aufgabe erstellen",
+      creating: "Wird erstellt...",
+      noPriority: "Keine Priorität",
+      general: "Allgemein"
+    },
+    en: {
+      back: "Back",
+      customer: "Customer",
+      customerProfile: "Customer profile",
+      customerTitleCopy: "Internal customer detail, intelligence, orders, and operator notes.",
+      customerOverview: "Customer Overview",
+      business: "Business",
+      industry: "Industry",
+      location: "Location",
+      budget: "Budget",
+      notSet: "Not set",
+      aiIntelligence: "AI Intelligence",
+      summary: "Summary",
+      risks: "Risks",
+      opportunities: "Opportunities",
+      nextActions: "Next actions",
+      stage: "Stage",
+      customerMood: "Customer mood",
+      riskLevel: "Risk level",
+      recommendedNextAction: "Recommended next action",
+      pendingTasks: "Pending tasks",
+      generateReport: "Generate AI Report",
+      regenerating: "Regenerating...",
+      regenerateReport: "Regenerate AI Report",
+      generateBoth: "Generate Admin + Customer Reports",
+      generatingReports: "Generating reports...",
+      followUp: "Follow-up Intelligence",
+      followUpCopy: "Internal admin-only insights. ALYN does not contact the customer.",
+      analyzeFollowUp: "Analyze follow-up need",
+      analyzing: "Analyzing...",
+      followUpNeeded: "Follow-up needed",
+      reason: "Reason",
+      urgency: "Urgency",
+      recommendedChannel: "Recommended channel",
+      recommendedTone: "Recommended tone",
+      suggestedAdminAction: "Suggested admin action",
+      suggestedMessage: "Suggested message",
+      customerPersonalityRead: "Customer personality read",
+      salesRisk: "Sales risk",
+      offerStrategy: "Offer strategy",
+      followUpFooter: "This recommendation is for the admin only. It does not send, schedule, or imply any customer contact.",
+      noFollowUp: "No follow-up analysis yet.",
+      strategyChat: "Admin Strategy Chat",
+      strategyCopy: "Internal admin-side strategy with ALYN for this customer.",
+      strategyPlaceholder: "Ask ALYN about sales strategy, risks, pricing angle, or next best action...",
+      sendToAlyn: "Send to ALYN",
+      sending: "Sending...",
+      customerTasks: "Customer Tasks",
+      customerTasksCopy: "Tasks filtered to this customer only.",
+      createTaskForCustomer: "Create task for this customer",
+      activeOrders: "Active Orders",
+      notes: "Notes",
+      notesCopy: "Short internal memory shared between Admin and ALYN.",
+      addSharedNote: "Add shared note",
+      adding: "Adding...",
+      noActiveOrders: "No active orders yet.",
+      noSharedNotes: "No shared notes yet. Add a short insight for ALYN and the admin team.",
+      noTasks: "No tasks",
+      noAssignees: "No assignees yet",
+      noDate: "No date",
+      due: "Due",
+      project: "Project",
+      status: "Status",
+      created: "Created",
+      package: "Package",
+      price: "Price",
+      addNotePlaceholder: "Add a short note for ALYN and the admin team...",
+      createTaskHeading: "Create task for this customer",
+      preselectedCustomer: "is preselected.",
+      close: "Close",
+      title: "Title",
+      noProject: "No project",
+      priority: "Priority",
+      taskType: "Task type",
+      visibility: "Visibility",
+      assignees: "Assignees",
+      description: "Description",
+      createTask: "Create task",
+      creating: "Creating...",
+      noPriority: "No priority",
+      general: "General"
+    }
+  }[language];
   const customerId = params.id;
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -287,6 +455,7 @@ export default function CustomerDetailPage() {
       console.error("CUSTOMER TASKS FETCH ERROR:", taskError);
       setTasksError(taskError.message);
     } else {
+      console.log("CUSTOMER TASKS:", taskData);
       setTasksError("");
       setCustomerTasks((taskData ?? []) as CustomerTask[]);
     }
@@ -867,28 +1036,28 @@ export default function CustomerDetailPage() {
   };
 
   const reportFields = [
-    ["Summary", report?.summary],
-    ["Risks", report?.risks],
-    ["Opportunities", report?.opportunities],
-    ["Next actions", report?.next_actions],
-    ["Stage", report?.stage],
-    ["Customer mood", report?.customer_mood],
-    ["Risk level", report?.risk_level],
-    ["Recommended next action", report?.recommended_next_action],
-    ["Pending tasks", report?.pending_tasks]
+    [t.summary, report?.summary],
+    [t.risks, report?.risks],
+    [t.opportunities, report?.opportunities],
+    [t.nextActions, report?.next_actions],
+    [t.stage, report?.stage],
+    [t.customerMood, report?.customer_mood],
+    [t.riskLevel, report?.risk_level],
+    [t.recommendedNextAction, report?.recommended_next_action],
+    [t.pendingTasks, report?.pending_tasks]
   ];
 
   const followUpFields = [
-    ["Follow-up needed", followUpAnalysis?.follow_up_needed],
-    ["Reason", followUpAnalysis?.reason],
-    ["Urgency", followUpAnalysis?.urgency],
-    ["Recommended channel", followUpAnalysis?.recommended_channel],
-    ["Recommended tone", followUpAnalysis?.recommended_tone],
-    ["Suggested admin action", followUpAnalysis?.suggested_admin_action],
-    ["Suggested message", followUpAnalysis?.suggested_message],
-    ["Customer personality read", followUpAnalysis?.customer_personality_read],
-    ["Sales risk", followUpAnalysis?.sales_risk],
-    ["Offer strategy", followUpAnalysis?.offer_strategy]
+    [t.followUpNeeded, followUpAnalysis?.follow_up_needed],
+    [t.reason, followUpAnalysis?.reason],
+    [t.urgency, followUpAnalysis?.urgency],
+    [t.recommendedChannel, followUpAnalysis?.recommended_channel],
+    [t.recommendedTone, followUpAnalysis?.recommended_tone],
+    [t.suggestedAdminAction, followUpAnalysis?.suggested_admin_action],
+    [t.suggestedMessage, followUpAnalysis?.suggested_message],
+    [t.customerPersonalityRead, followUpAnalysis?.customer_personality_read],
+    [t.salesRisk, followUpAnalysis?.sales_risk],
+    [t.offerStrategy, followUpAnalysis?.offer_strategy]
   ];
 
   const groupedCustomerTasks = useMemo(() => {
@@ -927,7 +1096,7 @@ export default function CustomerDetailPage() {
     return (
       <main className="grid min-h-screen place-items-center bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] px-4 text-center text-white">
         <p className="rounded-3xl border border-white/10 bg-white/[0.055] p-6 text-sm font-semibold shadow-glass backdrop-blur-xl">
-          Access denied. Admins only.
+          {language === "de" ? "Zugriff verweigert. Nur Admins." : "Access denied. Admins only."}
         </p>
       </main>
     );
@@ -944,14 +1113,14 @@ export default function CustomerDetailPage() {
         </Link>
         <Link href="/admin" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
           <ArrowLeft size={16} />
-          Back
+          {t.back}
         </Link>
       </div>
 
       <section className="mx-auto max-w-7xl py-10">
-        <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Customer</p>
-        <h1 className="mt-2 text-3xl font-bold sm:text-5xl">{profile?.business_name || "Customer profile"}</h1>
-        <p className="mt-3 text-sm text-white/[0.55]">Internal customer detail, intelligence, orders, and operator notes.</p>
+        <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">{t.customer}</p>
+        <h1 className="mt-2 text-3xl font-bold sm:text-5xl">{profile?.business_name || t.customerProfile}</h1>
+        <p className="mt-3 text-sm text-white/[0.55]">{t.customerTitleCopy}</p>
       </section>
 
       <div className="mx-auto grid max-w-7xl gap-6 pb-10">
@@ -960,13 +1129,13 @@ export default function CustomerDetailPage() {
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-neon/[0.15] text-neon">
               <BriefcaseBusiness size={22} />
             </span>
-            <h2 className="text-xl font-semibold">Customer Overview</h2>
+            <h2 className="text-xl font-semibold">{t.customerOverview}</h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-4">
-            <p className="text-sm text-white/[0.55]">Business: {profile?.business_name || "Not set"}</p>
-            <p className="text-sm text-white/[0.55]">Industry: {profile?.industry || "Not set"}</p>
-            <p className="text-sm text-white/[0.55]">Location: {profile?.location || "Not set"}</p>
-            <p className="text-sm text-white/[0.55]">Budget: {profile?.monthly_budget || profile?.monthly_marketing_budget || "Not set"}</p>
+            <p className="text-sm text-white/[0.55]">{t.business}: {profile?.business_name || t.notSet}</p>
+            <p className="text-sm text-white/[0.55]">{t.industry}: {profile?.industry || t.notSet}</p>
+            <p className="text-sm text-white/[0.55]">{t.location}: {profile?.location || t.notSet}</p>
+            <p className="text-sm text-white/[0.55]">{t.budget}: {profile?.monthly_budget || profile?.monthly_marketing_budget || t.notSet}</p>
           </div>
         </section>
 
@@ -975,20 +1144,20 @@ export default function CustomerDetailPage() {
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-neon/[0.15] text-neon">
               <Brain size={22} />
             </span>
-            <h2 className="text-xl font-semibold">AI Intelligence</h2>
+            <h2 className="text-xl font-semibold">{t.aiIntelligence}</h2>
           </div>
           {report ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {reportFields.map(([label, value]) => (
-                <p key={label} className={`text-sm text-white/[0.55] ${label === "Summary" || label === "Pending tasks" ? "sm:col-span-2" : ""}`}>
-                  {label}: {value || "Not set"}
+                <p key={label} className={`text-sm text-white/[0.55] ${label === t.summary || label === t.pendingTasks ? "sm:col-span-2" : ""}`}>
+                  {label}: {value || t.notSet}
                 </p>
               ))}
             </div>
           ) : (
             <div>
               <button onClick={handleGenerateReport} disabled={isGenerating} className="inline-flex min-h-11 items-center justify-center rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70">
-                {isGenerating ? "Generating..." : "Generate AI Report"}
+                {isGenerating ? t.regenerating : t.generateReport}
               </button>
               {reportError ? <p className="mt-3 text-sm text-red-100">{reportError}</p> : null}
             </div>
@@ -996,7 +1165,7 @@ export default function CustomerDetailPage() {
           {report && (
             <div className="mt-5">
               <button onClick={handleGenerateReport} disabled={isGenerating} className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white disabled:cursor-not-allowed disabled:opacity-70">
-                {isGenerating ? "Regenerating..." : "Regenerate AI Report"}
+                {isGenerating ? t.regenerating : t.regenerateReport}
               </button>
               {reportError ? <p className="mt-3 text-sm text-red-100">{reportError}</p> : null}
             </div>
@@ -1007,7 +1176,7 @@ export default function CustomerDetailPage() {
               disabled={isGeneratingCombinedReports}
               className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isGeneratingCombinedReports ? "Generating reports..." : "Generate Admin + Customer Reports"}
+              {isGeneratingCombinedReports ? t.generatingReports : t.generateBoth}
             </button>
             {combinedReportsMessage ? <p className="mt-3 text-sm text-emerald-100">{combinedReportsMessage}</p> : null}
             {combinedReportsError ? <p className="mt-3 text-sm text-red-100">{combinedReportsError}</p> : null}
@@ -1021,29 +1190,29 @@ export default function CustomerDetailPage() {
                 <ClipboardList size={22} />
               </span>
               <div>
-                <h2 className="text-xl font-semibold">Follow-up Intelligence</h2>
-                <p className="mt-1 text-sm text-white/[0.55]">Internal admin alert only. ALYN will not contact the customer.</p>
+                <h2 className="text-xl font-semibold">{t.followUp}</h2>
+                <p className="mt-1 text-sm text-white/[0.55]">{t.followUpCopy}</p>
               </div>
             </div>
             <button onClick={handleAnalyzeFollowUp} disabled={isAnalyzingFollowUp} className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70">
-              {isAnalyzingFollowUp ? "Analyzing..." : "Analyze follow-up need"}
+              {isAnalyzingFollowUp ? t.analyzing : t.analyzeFollowUp}
             </button>
           </div>
           {followUpError ? <p className="mb-4 text-sm text-red-100">{followUpError}</p> : null}
           {followUpAnalysis ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {followUpFields.map(([label, value]) => (
-                <p key={label} className={`text-sm text-white/[0.55] ${label === "Reason" || label === "Suggested message" || label === "Offer strategy" ? "sm:col-span-2" : ""}`}>
-                  {label}: {value || "Not set"}
+                <p key={label} className={`text-sm text-white/[0.55] ${label === t.reason || label === t.suggestedMessage || label === t.offerStrategy ? "sm:col-span-2" : ""}`}>
+                  {label}: {value || t.notSet}
                 </p>
               ))}
               <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.62] sm:col-span-2">
-                This recommendation is for the admin only. It does not send, schedule, or imply any customer contact.
+                {t.followUpFooter}
               </p>
             </div>
           ) : (
             <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.55]">
-              No follow-up analysis yet.
+              {t.noFollowUp}
             </p>
           )}
         </section>
@@ -1054,8 +1223,8 @@ export default function CustomerDetailPage() {
               <Brain size={22} />
             </span>
             <div>
-              <h2 className="text-xl font-semibold">Admin Strategy Chat</h2>
-              <p className="mt-1 text-sm text-white/[0.55]">Internal admin-side strategy with ALYN for this customer.</p>
+                <h2 className="text-xl font-semibold">{t.strategyChat}</h2>
+                <p className="mt-1 text-sm text-white/[0.55]">{t.strategyCopy}</p>
             </div>
           </div>
           <div ref={chatMessagesRef} className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
@@ -1067,7 +1236,7 @@ export default function CustomerDetailPage() {
             ))}
             {isSendingChat ? (
               <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-                <p className="text-sm text-white/[0.62]">ALYN is thinking...</p>
+                <p className="text-sm text-white/[0.62]">{language === "de" ? "ALYN denkt nach..." : "ALYN is thinking..."}</p>
               </div>
             ) : null}
           </div>
@@ -1076,11 +1245,11 @@ export default function CustomerDetailPage() {
             value={chatInput}
             onChange={(event) => setChatInput(event.target.value)}
             onKeyDown={handleChatKeyDown}
-            placeholder="Ask ALYN about sales strategy, risks, pricing angle, or next best action..."
+            placeholder={t.strategyPlaceholder}
             className="mt-5 min-h-28 w-full rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-sm text-white outline-none placeholder:text-white/[0.38] focus:border-neon/60"
           />
           <button onClick={handleSendChat} disabled={isSendingChat} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff] disabled:cursor-not-allowed disabled:opacity-70">
-            {isSendingChat ? "Sending..." : "Send to ALYN"}
+            {isSendingChat ? t.sending : t.sendToAlyn}
           </button>
         </section>
 
@@ -1091,32 +1260,34 @@ export default function CustomerDetailPage() {
                 <ClipboardList size={22} />
               </span>
               <div>
-                <h2 className="text-xl font-semibold">Customer Tasks</h2>
-                <p className="mt-1 text-sm text-white/[0.55]">Tasks filtered to this customer only.</p>
+                <h2 className="text-xl font-semibold">{t.customerTasks}</h2>
+                <p className="mt-1 text-sm text-white/[0.55]">{t.customerTasksCopy}</p>
               </div>
             </div>
             <button onClick={() => setIsCreateTaskOpen(true)} className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
-              Create task for this customer
+              {t.createTaskForCustomer}
             </button>
           </div>
           {tasksError ? <p className="mb-4 text-sm text-red-100">{tasksError}</p> : null}
           <DragDropContext onDragEnd={handleCustomerTaskDragEnd}>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid max-h-[60vh] min-h-[320px] gap-3 overflow-hidden md:grid-cols-2 xl:grid-cols-5">
               {taskStatuses.map((status) => (
                 <Droppable droppableId={status} key={status}>
                   {(provided, snapshot) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`min-h-[260px] rounded-2xl border border-white/10 bg-white/[0.035] p-3 transition ${
+                      className={`flex min-h-[260px] max-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-3 transition ${
                         snapshot.isDraggingOver ? "border-neon/50 bg-neon/[0.08]" : ""
                       }`}
                     >
-                      <div className="mb-3 flex items-center justify-between">
+                      <div className="sticky top-0 z-10 mb-3 flex items-center justify-between rounded-xl bg-[#101625]/95 px-1 py-1 backdrop-blur-sm">
                         <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/[0.5]">{taskStatusLabels[status]}</h3>
                         <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs text-white/[0.5]">{groupedCustomerTasks[status].length}</span>
                       </div>
-                      <div className="space-y-2">
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="min-h-0 max-h-[420px] flex-1 space-y-2 overflow-y-auto pr-1"
+                      >
                         {groupedCustomerTasks[status].length > 0 ? (
                           groupedCustomerTasks[status].map((task, index) => (
                             <Draggable draggableId={task.id} index={index} key={task.id}>
@@ -1134,20 +1305,20 @@ export default function CustomerDetailPage() {
                                     <p className="text-sm font-semibold text-white">{task.title || "Untitled task"}</p>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                       <span className={`rounded-full border px-2 py-1 text-xs ${priorityClassName(task.priority)}`}>
-                                        {task.priority || "No priority"}
+                                        {task.priority || t.noPriority}
                                       </span>
                                       <span className="rounded-full border border-white/10 bg-white/[0.055] px-2 py-1 text-xs text-white/[0.55]">
-                                        {task.task_type || "General"}
+                                        {task.task_type || t.general}
                                       </span>
                                     </div>
                                     {task.due_date ? (
-                                      <p className="mt-2 text-xs text-white/[0.42]">Due: {new Date(task.due_date).toLocaleDateString()}</p>
+                                      <p className="mt-2 text-xs text-white/[0.42]">{t.due}: {new Date(task.due_date).toLocaleDateString()}</p>
                                     ) : null}
                                     {task.project_id ? (
-                                      <p className="mt-1 text-xs text-white/[0.34]">Project: {projects.find((project) => project.id === task.project_id)?.name || projects.find((project) => project.id === task.project_id)?.title || task.project_id}</p>
+                                      <p className="mt-1 text-xs text-white/[0.34]">{t.project}: {projects.find((project) => project.id === task.project_id)?.name || projects.find((project) => project.id === task.project_id)?.title || task.project_id}</p>
                                     ) : null}
                                     <p className="mt-1 text-xs text-white/[0.34]">
-                                      {getTaskAssigneeNames(task).length > 0 ? getTaskAssigneeNames(task).join(", ") : "No assignees yet"}
+                                      {getTaskAssigneeNames(task).length > 0 ? getTaskAssigneeNames(task).join(", ") : t.noAssignees}
                                     </p>
                                   </Link>
                                 </div>
@@ -1155,7 +1326,7 @@ export default function CustomerDetailPage() {
                             </Draggable>
                           ))
                         ) : (
-                          <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-xs text-white/[0.42]">No tasks</p>
+                          <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-xs text-white/[0.42]">{t.noTasks}</p>
                         )}
                         {provided.placeholder}
                       </div>
@@ -1172,7 +1343,7 @@ export default function CustomerDetailPage() {
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-neon/[0.15] text-neon">
               <ClipboardList size={22} />
             </span>
-            <h2 className="text-xl font-semibold">Active Orders</h2>
+            <h2 className="text-xl font-semibold">{t.activeOrders}</h2>
           </div>
           {ordersError ? <p className="mb-3 rounded-2xl border border-red-300/25 bg-red-400/10 p-3 text-sm text-red-100">{ordersError}</p> : null}
           <div className="space-y-3">
@@ -1183,22 +1354,22 @@ export default function CustomerDetailPage() {
                     <div>
                       <p className="font-semibold">{getOrderTitle(order)}</p>
                       {order.description ? <p className="mt-1 text-sm leading-6 text-white/[0.62]">{order.description}</p> : null}
-                      <p className="mt-1 text-sm text-white/[0.55]">Status: {order.status || "Not set"}</p>
+                      <p className="mt-1 text-sm text-white/[0.55]">{t.status}: {order.status || t.notSet}</p>
                       <p className="mt-1 text-xs text-white/[0.42]">
-                        Created: {order.created_at ? new Date(order.created_at).toLocaleDateString() : "No date"}
+                        {t.created}: {order.created_at ? new Date(order.created_at).toLocaleDateString() : t.noDate}
                       </p>
                     </div>
                     {(order.price || order.amount || order.total_amount || order.package || order.package_name) ? (
                       <div className="rounded-2xl border border-white/10 bg-black/10 px-3 py-2 text-xs text-white/[0.58]">
-                        {order.package || order.package_name ? <p>Package: {order.package || order.package_name}</p> : null}
-                        {order.price || order.amount || order.total_amount ? <p>Price: {order.price || order.amount || order.total_amount}</p> : null}
+                        {order.package || order.package_name ? <p>{t.package}: {order.package || order.package_name}</p> : null}
+                        {order.price || order.amount || order.total_amount ? <p>{t.price}: {order.price || order.amount || order.total_amount}</p> : null}
                       </div>
                     ) : null}
                   </div>
                 </div>
               ))
             ) : (
-              <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.55]">No active orders yet.</p>
+              <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.55]">{t.noActiveOrders}</p>
             )}
           </div>
         </section>
@@ -1209,21 +1380,21 @@ export default function CustomerDetailPage() {
               <FileText size={22} />
             </span>
             <div>
-              <h2 className="text-xl font-semibold">Notes</h2>
-              <p className="mt-1 text-sm text-white/[0.55]">Short internal memory shared between Admin and ALYN.</p>
+                <h2 className="text-xl font-semibold">{t.notes}</h2>
+                <p className="mt-1 text-sm text-white/[0.55]">{t.notesCopy}</p>
             </div>
           </div>
           <form onSubmit={handleAddSharedNote} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
             <textarea
               value={noteInput}
               onChange={(event) => setNoteInput(event.target.value)}
-              placeholder="Add a short note for ALYN and the admin team..."
+              placeholder={t.addNotePlaceholder}
               className="min-h-24 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm text-white outline-none placeholder:text-white/[0.38] focus:border-neon/60"
             />
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-white/[0.45]">Short internal memory shared between Admin and ALYN.</p>
+              <p className="text-xs text-white/[0.45]">{t.notesCopy}</p>
               <button type="submit" disabled={isAddingNote || !noteInput.trim()} className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow disabled:cursor-not-allowed disabled:opacity-60">
-                {isAddingNote ? "Adding..." : "Add shared note"}
+                {isAddingNote ? t.adding : t.addSharedNote}
               </button>
             </div>
           </form>
@@ -1237,7 +1408,7 @@ export default function CustomerDetailPage() {
                       {getNoteSource(note)}
                     </span>
                     <span className="text-xs text-white/[0.42]">
-                      {note.created_at ? new Date(note.created_at).toLocaleDateString() : "No date"}
+                      {note.created_at ? new Date(note.created_at).toLocaleDateString() : t.noDate}
                     </span>
                   </div>
                   <p className="text-sm font-semibold leading-6 text-white/[0.82]">{getNoteText(note)}</p>
@@ -1245,7 +1416,7 @@ export default function CustomerDetailPage() {
               ))
             ) : (
               <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.55] md:col-span-2">
-                No shared notes yet. Add a short insight for ALYN and the admin team.
+                {t.noSharedNotes}
               </p>
             )}
           </div>
@@ -1257,14 +1428,14 @@ export default function CustomerDetailPage() {
           <form onSubmit={handleCreateCustomerTask} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#11172a] p-6 shadow-glass">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold">Create task for this customer</h2>
-                <p className="mt-1 text-sm text-white/[0.55]">{profile?.business_name || "Customer"} is preselected.</p>
+                <h2 className="text-xl font-semibold">{t.createTaskHeading}</h2>
+                <p className="mt-1 text-sm text-white/[0.55]">{profile?.business_name || t.customer} {t.preselectedCustomer}</p>
               </div>
-              <button type="button" onClick={() => setIsCreateTaskOpen(false)} className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm text-white/[0.72]">Close</button>
+              <button type="button" onClick={() => setIsCreateTaskOpen(false)} className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-sm text-white/[0.72]">{t.close}</button>
             </div>
             {createTaskError ? <p className="mb-4 text-sm text-red-100">{createTaskError}</p> : null}
             <div className="grid gap-4 md:grid-cols-2">
-              <input required value={taskForm.title} onChange={(event) => setTaskForm({ ...taskForm, title: event.target.value })} placeholder="Title" className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
+              <input required value={taskForm.title} onChange={(event) => setTaskForm({ ...taskForm, title: event.target.value })} placeholder={t.title} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
               <select value={taskForm.project_id} onChange={(event) => {
                 const selectedProject = projects.find((project) => project.id === event.target.value);
                 if (event.target.value && !selectedProject) {
@@ -1278,18 +1449,18 @@ export default function CustomerDetailPage() {
                 }
                 setTaskForm({ ...taskForm, project_id: event.target.value });
               }} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none">
-                <option value="">No project</option>
+                <option value="">{t.noProject}</option>
                 {projects.map((project) => <option key={project.id} value={project.id}>{project.name || project.title || project.id}</option>)}
               </select>
               <select value={taskForm.status} onChange={(event) => setTaskForm({ ...taskForm, status: event.target.value })} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none">
                 {taskStatuses.map((status) => <option key={status} value={status}>{taskStatusLabels[status]}</option>)}
               </select>
-              <input value={taskForm.priority} onChange={(event) => setTaskForm({ ...taskForm, priority: event.target.value })} placeholder="Priority" className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
-              <input value={taskForm.task_type} onChange={(event) => setTaskForm({ ...taskForm, task_type: event.target.value })} placeholder="Task type" className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
+              <input value={taskForm.priority} onChange={(event) => setTaskForm({ ...taskForm, priority: event.target.value })} placeholder={t.priority} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
+              <input value={taskForm.task_type} onChange={(event) => setTaskForm({ ...taskForm, task_type: event.target.value })} placeholder={t.taskType} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
               <input type="date" value={taskForm.due_date} onChange={(event) => setTaskForm({ ...taskForm, due_date: event.target.value })} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none" />
-              <input value={taskForm.visibility} onChange={(event) => setTaskForm({ ...taskForm, visibility: event.target.value })} placeholder="Visibility" className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none md:col-span-2" />
+              <input value={taskForm.visibility} onChange={(event) => setTaskForm({ ...taskForm, visibility: event.target.value })} placeholder={t.visibility} className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none md:col-span-2" />
               <label className="md:col-span-2">
-                <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/[0.45]">Assignees</span>
+                <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/[0.45]">{t.assignees}</span>
                 {assignees.length > 0 ? (
                   <select
                     multiple
@@ -1305,13 +1476,13 @@ export default function CustomerDetailPage() {
                     ))}
                   </select>
                 ) : (
-                  <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 text-sm text-white/[0.55]">No assignees yet</p>
+                  <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-3 text-sm text-white/[0.55]">{t.noAssignees}</p>
                 )}
               </label>
-              <textarea value={taskForm.description} onChange={(event) => setTaskForm({ ...taskForm, description: event.target.value })} placeholder="Description" className="min-h-28 rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none md:col-span-2" />
+              <textarea value={taskForm.description} onChange={(event) => setTaskForm({ ...taskForm, description: event.target.value })} placeholder={t.description} className="min-h-28 rounded-2xl border border-white/10 bg-white/[0.055] p-3 text-sm outline-none md:col-span-2" />
             </div>
             <button disabled={isCreatingTask} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow disabled:opacity-70">
-              {isCreatingTask ? "Creating..." : "Create task"}
+              {isCreatingTask ? t.creating : t.createTask}
             </button>
           </form>
         </div>

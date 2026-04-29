@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles, Users } from "lucide-react";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_EMAILS = ["hoseinpour.sorena@gmail.com"];
@@ -19,6 +20,43 @@ type Customer = {
 
 export default function AdminCustomersPage() {
   const router = useRouter();
+  const { language } = useAppLanguage("de");
+  const t = {
+    de: {
+      back: "Zurück",
+      crm: "Admin CRM",
+      customers: "Kunden",
+      subtitle: "Interne Kundenprofile, die durch das Onboarding erstellt wurden.",
+      customerProfiles: "Kundenprofile",
+      customerProfilesCopy: "Alle echten Unternehmensprofile in Supabase.",
+      profile: "Profil",
+      profiles: "Profile",
+      unnamedCustomer: "Unbenannter Kunde",
+      created: "Erstellt",
+      noDate: "Kein Datum",
+      noIndustry: "Keine Branche",
+      noLocation: "Kein Standort",
+      noBudget: "Kein Budget",
+      noCustomers: "Noch keine Kunden"
+    },
+    en: {
+      back: "Back",
+      crm: "Admin CRM",
+      customers: "Customers",
+      subtitle: "Internal customer profiles created through onboarding.",
+      customerProfiles: "Customer Profiles",
+      customerProfilesCopy: "All real business profiles in Supabase.",
+      profile: "profile",
+      profiles: "profiles",
+      unnamedCustomer: "Unnamed customer",
+      created: "Created",
+      noDate: "No date",
+      noIndustry: "No industry",
+      noLocation: "No location",
+      noBudget: "No budget",
+      noCustomers: "No customers yet"
+    }
+  }[language];
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
@@ -73,14 +111,14 @@ export default function AdminCustomersPage() {
         </Link>
         <Link href="/admin" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
           <ArrowLeft size={16} />
-          Back
+          {t.back}
         </Link>
       </div>
 
       <section className="mx-auto max-w-7xl py-10">
-        <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Admin CRM</p>
-        <h1 className="mt-2 text-3xl font-bold sm:text-5xl">Customers</h1>
-        <p className="mt-3 text-sm text-white/[0.55]">Internal customer profiles created through onboarding.</p>
+        <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">{t.crm}</p>
+        <h1 className="mt-2 text-3xl font-bold sm:text-5xl">{t.customers}</h1>
+        <p className="mt-3 text-sm text-white/[0.55]">{t.subtitle}</p>
       </section>
 
       <section className="mx-auto max-w-7xl rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
@@ -90,12 +128,12 @@ export default function AdminCustomersPage() {
               <Users size={22} />
             </span>
             <div>
-              <h2 className="text-xl font-semibold">Customer Profiles</h2>
-              <p className="mt-1 text-sm text-white/[0.55]">All real business profiles in Supabase.</p>
+              <h2 className="text-xl font-semibold">{t.customerProfiles}</h2>
+              <p className="mt-1 text-sm text-white/[0.55]">{t.customerProfilesCopy}</p>
             </div>
           </div>
           <span className="w-fit rounded-full bg-white/[0.07] px-3 py-1 text-xs text-white/[0.58]">
-            {customers.length} profile{customers.length === 1 ? "" : "s"}
+            {customers.length} {customers.length === 1 ? t.profile : t.profiles}
           </span>
         </div>
 
@@ -108,19 +146,19 @@ export default function AdminCustomersPage() {
                 className="grid gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4 transition hover:bg-white/[0.08] md:grid-cols-5 md:items-center"
               >
                 <span>
-                  <span className="block text-sm font-semibold text-white">{customer.business_name || "Unnamed customer"}</span>
+                  <span className="block text-sm font-semibold text-white">{customer.business_name || t.unnamedCustomer}</span>
                   <span className="mt-1 block text-xs text-white/[0.42]">
-                    Created: {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : "No date"}
+                    {t.created}: {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : t.noDate}
                   </span>
                 </span>
-                <span className="text-sm text-white/[0.62]">{customer.industry || "No industry"}</span>
-                <span className="text-sm text-white/[0.62]">{customer.location || "No location"}</span>
-                <span className="text-sm text-white/[0.62]">{customer.monthly_marketing_budget || "No budget"}</span>
-                <span className="text-sm text-white/[0.42]">{customer.created_at ? new Date(customer.created_at).toLocaleDateString() : "No date"}</span>
+                <span className="text-sm text-white/[0.62]">{customer.industry || t.noIndustry}</span>
+                <span className="text-sm text-white/[0.62]">{customer.location || t.noLocation}</span>
+                <span className="text-sm text-white/[0.62]">{customer.monthly_marketing_budget || t.noBudget}</span>
+                <span className="text-sm text-white/[0.42]">{customer.created_at ? new Date(customer.created_at).toLocaleDateString() : t.noDate}</span>
               </Link>
             ))
           ) : (
-            <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.62]">No customers yet</p>
+            <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.62]">{t.noCustomers}</p>
           )}
         </div>
       </section>

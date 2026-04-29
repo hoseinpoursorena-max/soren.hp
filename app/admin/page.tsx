@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import { Timer, Users } from "lucide-react";
 
@@ -166,6 +167,72 @@ const matchesTimeFilter = (dateValue: string | null | undefined, filter: TimeFil
 
 export default function AdminPage() {
   const router = useRouter();
+  const { language } = useAppLanguage("de");
+  const t = {
+    de: {
+      accessDenied: "Zugriff verweigert. Nur Admins.",
+      admin: "Admin",
+      title: "Interne Plattform",
+      subtitle: "Kunden, Deals, Aufgaben und Umsetzungsstatus an einem Ort.",
+      activeCustomers: "Aktive Kunden",
+      deals: "Deals",
+      tasks: "Aufgaben",
+      overdueTasks: "Überfällige Aufgaben",
+      globalTaskCenter: "Globales Task Command Center",
+      globalTaskCopy: "Umsetzungsstatus über alle Kunden, Projekte und internen Aufgaben hinweg.",
+      openTaskManager: "Vollen Task-Manager öffnen",
+      todayTasks: "Heutige Aufgaben",
+      weekTasks: "Aufgaben diese Woche",
+      highPriorityTasks: "Hohe Priorität",
+      noTasks: "Keine Aufgaben",
+      noDueDate: "Kein Fälligkeitsdatum",
+      dealsPipeline: "Deals-Pipeline",
+      dealsCopy: "Interne CRM-Sicht für Wachstumspläne, Zahlungsstatus und Kunden-Deals.",
+      viewPipeline: "Volle Pipeline ansehen",
+      noDeals: "Keine Deals",
+      customers: "Kunden",
+      customersCopy: "Live-Kundenprofile aus dem Onboarding.",
+      viewCustomers: "Alle Kunden ansehen",
+      noCustomers: "Noch keine Kunden",
+      noCustomer: "Kein Kunde",
+      unnamedCustomer: "Unbenannter Kunde",
+      noIndustry: "Keine Branche",
+      noLocation: "Kein Standort",
+      noBudget: "Kein Budget",
+      noDate: "Kein Datum"
+    },
+    en: {
+      accessDenied: "Access denied. Admins only.",
+      admin: "Admin",
+      title: "Internal operating system",
+      subtitle: "Customers, deals, tasks, and execution status in one place.",
+      activeCustomers: "Active customers",
+      deals: "Deals",
+      tasks: "Tasks",
+      overdueTasks: "Overdue tasks",
+      globalTaskCenter: "Global Task Command Center",
+      globalTaskCopy: "Execution health across all customers, projects, and internal work.",
+      openTaskManager: "Open full task manager",
+      todayTasks: "Today tasks",
+      weekTasks: "This week tasks",
+      highPriorityTasks: "High priority tasks",
+      noTasks: "No tasks",
+      noDueDate: "No due date",
+      dealsPipeline: "Deals Pipeline",
+      dealsCopy: "Internal CRM view for proposed growth plans, payment status, and customer deal flow.",
+      viewPipeline: "View full pipeline",
+      customers: "Customers",
+      customersCopy: "Live customer profiles created through onboarding.",
+      viewCustomers: "View all customers",
+      noCustomers: "No customers yet",
+      noCustomer: "No customer",
+      unnamedCustomer: "Unnamed customer",
+      noIndustry: "No industry",
+      noLocation: "No location",
+      noBudget: "No budget",
+      noDate: "No date"
+    }
+  }[language];
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -292,7 +359,7 @@ export default function AdminPage() {
     return (
       <main className="grid min-h-screen place-items-center bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] px-4 text-center text-white">
         <p className="rounded-3xl border border-white/10 bg-white/[0.055] p-6 text-sm font-semibold shadow-glass backdrop-blur-xl">
-          Access denied. Admins only.
+          {t.accessDenied}
         </p>
       </main>
     );
@@ -303,9 +370,9 @@ export default function AdminPage() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f1a]/70 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Admin</p>
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Internal operating system</h1>
-            <p className="mt-1 text-sm text-white/[0.5]">Customers, deals, tasks, and execution status in one place.</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">{t.admin}</p>
+            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{t.title}</h1>
+            <p className="mt-1 text-sm text-white/[0.5]">{t.subtitle}</p>
           </div>
         </div>
       </header>
@@ -313,10 +380,10 @@ export default function AdminPage() {
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
-            ["Active customers", String(customers.length)],
-            ["Deals", String(deals.length)],
-            ["Tasks", String(tasks.length)],
-            ["Overdue tasks", String(overdueTasks.length)]
+            [t.activeCustomers, String(customers.length)],
+            [t.deals, String(deals.length)],
+            [t.tasks, String(tasks.length)],
+            [t.overdueTasks, String(overdueTasks.length)]
           ].map(([label, value]) => (
             <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
               <p className="text-sm text-white/[0.55]">{label}</p>
@@ -333,21 +400,21 @@ export default function AdminPage() {
                   <Timer size={22} />
                 </span>
                 <div>
-                  <h2 className="text-xl font-semibold">Global Task Command Center</h2>
-                  <p className="mt-1 text-sm text-white/[0.55]">Execution health across all customers, projects, and internal work.</p>
+                  <h2 className="text-xl font-semibold">{t.globalTaskCenter}</h2>
+                  <p className="mt-1 text-sm text-white/[0.55]">{t.globalTaskCopy}</p>
                 </div>
               </div>
             </div>
             <Link href="/admin/tasks" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
-              Open full task manager
+              {t.openTaskManager}
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              ["Today tasks", todayTasks.length],
-              ["Overdue tasks", overdueTasks.length],
-              ["This week tasks", weekTasks.length],
-              ["High priority tasks", highPriorityTasks.length]
+              [t.todayTasks, todayTasks.length],
+              [t.overdueTasks, overdueTasks.length],
+              [t.weekTasks, weekTasks.length],
+              [t.highPriorityTasks, highPriorityTasks.length]
             ].map(([label, value]) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-white/[0.42]">{label}</p>
@@ -355,17 +422,17 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
-          <div className="mt-5 grid gap-3 xl:grid-cols-5">
+          <div className="mt-5 grid max-h-[60vh] min-h-[280px] gap-3 xl:grid-cols-5">
             {taskStatuses.map((status) => {
               const statusTasks = tasks.filter((task) => getTaskStatus(task.status) === status).slice(0, 3);
 
               return (
-                <div key={status} className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                <div key={status} className="flex min-h-[220px] max-h-[420px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/[0.45]">{status.replace("_", " ")}</h3>
                     <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs text-white/[0.5]">{tasks.filter((task) => getTaskStatus(task.status) === status).length}</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                     {statusTasks.length > 0 ? (
                       statusTasks.map((task) => (
                         <button
@@ -375,11 +442,11 @@ export default function AdminPage() {
                         >
                           <p className="text-sm font-semibold">{task.title || "Untitled task"}</p>
                           <p className="mt-1 text-xs text-white/[0.45]">{task.priority || "No priority"} · {task.task_type || "General"}</p>
-                          <p className={`mt-1 text-xs ${isOverdue(task.due_date) ? "text-red-100" : "text-white/[0.42]"}`}>{task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}</p>
+                          <p className={`mt-1 text-xs ${isOverdue(task.due_date) ? "text-red-100" : "text-white/[0.42]"}`}>{task.due_date ? new Date(task.due_date).toLocaleDateString() : t.noDueDate}</p>
                         </button>
                       ))
                     ) : (
-                      <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-xs text-white/[0.42]">No tasks</p>
+                      <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-xs text-white/[0.42]">{t.noTasks}</p>
                     )}
                   </div>
                 </div>
@@ -391,11 +458,11 @@ export default function AdminPage() {
         <section className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 shadow-glass backdrop-blur-xl">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold">Deals Pipeline</h2>
-              <p className="mt-2 text-sm text-white/[0.55]">Internal CRM view for proposed growth plans, payment status, and customer deal flow.</p>
+              <h2 className="text-xl font-semibold">{t.dealsPipeline}</h2>
+              <p className="mt-2 text-sm text-white/[0.55]">{t.dealsCopy}</p>
             </div>
             <Link href="/admin/deals" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
-              View full pipeline
+              {t.viewPipeline}
             </Link>
           </div>
           <div className="grid gap-4 xl:grid-cols-6">
@@ -417,7 +484,7 @@ export default function AdminPage() {
                           className="w-full rounded-2xl border border-white/10 bg-white/[0.045] p-3 text-left transition hover:bg-white/[0.08]"
                         >
                           <p className="text-sm font-semibold text-white">{deal.title || deal.deal_title || "Untitled deal"}</p>
-                          <p className="mt-1 text-xs text-white/[0.5]">{deal.business_profile_id ? customerNames[deal.business_profile_id] || deal.business_profile_id : "No customer"}</p>
+                          <p className="mt-1 text-xs text-white/[0.5]">{deal.business_profile_id ? customerNames[deal.business_profile_id] || deal.business_profile_id : t.noCustomer}</p>
                           <p className="mt-2 text-xs text-white/[0.62]">{deal.total_amount || deal.total || "0"} {deal.currency || "EUR"}</p>
                           <p className="mt-1 text-xs text-white/[0.42]">Status: {getDealStatus(deal.status)}</p>
                           <p className="mt-1 text-xs text-white/[0.42]">Payment: {deal.payment_status || "pending"}</p>
@@ -425,7 +492,7 @@ export default function AdminPage() {
                         </button>
                       ))
                     ) : (
-                      <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-xs text-white/[0.42]">No deals</p>
+                      <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-xs text-white/[0.42]">{t.noDeals}</p>
                     )}
                   </div>
                 </div>
@@ -550,13 +617,13 @@ export default function AdminPage() {
                   <Users size={22} />
                 </span>
                 <div>
-                  <h2 className="text-xl font-semibold">Customers</h2>
-                  <p className="mt-1 text-sm text-white/[0.55]">Live customer profiles created through onboarding.</p>
+                  <h2 className="text-xl font-semibold">{t.customers}</h2>
+                  <p className="mt-1 text-sm text-white/[0.55]">{t.customersCopy}</p>
                 </div>
               </div>
             </div>
             <Link href="/admin/customers" className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
-              View all customers
+              {t.viewCustomers}
             </Link>
           </div>
           <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
@@ -568,17 +635,17 @@ export default function AdminPage() {
                   className="grid w-full gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-left transition hover:bg-white/[0.08] md:grid-cols-5 md:items-center"
                 >
                   <span>
-                    <span className="block text-sm font-semibold text-white">{customer.business_name || "Unnamed customer"}</span>
-                    <span className="mt-1 block text-xs text-white/[0.42]">Created: {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : "No date"}</span>
+                    <span className="block text-sm font-semibold text-white">{customer.business_name || t.unnamedCustomer}</span>
+                    <span className="mt-1 block text-xs text-white/[0.42]">Created: {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : t.noDate}</span>
                   </span>
-                  <span className="text-sm text-white/[0.62]">{customer.industry || "No industry"}</span>
-                  <span className="text-sm text-white/[0.62]">{customer.location || "No location"}</span>
-                  <span className="text-sm text-white/[0.62]">{customer.monthly_marketing_budget || customer.monthly_budget || "No budget"}</span>
-                  <span className="text-sm text-white/[0.42]">{customer.created_at ? new Date(customer.created_at).toLocaleDateString() : "No date"}</span>
+                  <span className="text-sm text-white/[0.62]">{customer.industry || t.noIndustry}</span>
+                  <span className="text-sm text-white/[0.62]">{customer.location || t.noLocation}</span>
+                  <span className="text-sm text-white/[0.62]">{customer.monthly_marketing_budget || customer.monthly_budget || t.noBudget}</span>
+                  <span className="text-sm text-white/[0.42]">{customer.created_at ? new Date(customer.created_at).toLocaleDateString() : t.noDate}</span>
                 </button>
               ))
             ) : (
-              <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.62]">No customers yet</p>
+              <p className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm text-white/[0.62]">{t.noCustomers}</p>
             )}
           </div>
         </section>

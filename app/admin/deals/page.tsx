@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import { ArrowLeft, CreditCard, Sparkles } from "lucide-react";
 
@@ -33,6 +34,53 @@ type Deal = {
 
 export default function AdminDealsPage() {
   const router = useRouter();
+  const { language } = useAppLanguage("de");
+  const t = {
+    de: {
+      back: "Zurück",
+      crm: "Admin CRM",
+      title: "Deals-Pipeline",
+      subtitle: "Vollständige interne Pipeline, gruppiert nach Deal-Status.",
+      loading: "Deals werden geladen...",
+      empty: "Noch keine Deals. Erstelle den ersten Deal, um Umsatz zu verfolgen.",
+      noDeals: "Keine Deals",
+      noCustomer: "Kein Kunde",
+      status: "Status",
+      payment: "Zahlung",
+      noDate: "Kein Datum",
+      pending: "ausstehend",
+      statuses: {
+        draft: "Entwurf",
+        proposed: "Vorgeschlagen",
+        accepted: "Akzeptiert",
+        rejected: "Abgelehnt",
+        paid: "Bezahlt",
+        cancelled: "Storniert"
+      }
+    },
+    en: {
+      back: "Back",
+      crm: "Admin CRM",
+      title: "Deals Pipeline",
+      subtitle: "Full internal pipeline grouped by deal status.",
+      loading: "Loading deals...",
+      empty: "No deals yet. Create your first deal to start tracking revenue.",
+      noDeals: "No deals",
+      noCustomer: "No customer",
+      status: "Status",
+      payment: "Payment",
+      noDate: "No date",
+      pending: "pending",
+      statuses: {
+        draft: "Draft",
+        proposed: "Proposed",
+        accepted: "Accepted",
+        rejected: "Rejected",
+        paid: "Paid",
+        cancelled: "Cancelled"
+      }
+    }
+  }[language];
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isLoadingDeals, setIsLoadingDeals] = useState(true);
   const [dealsError, setDealsError] = useState("");
@@ -120,14 +168,14 @@ export default function AdminDealsPage() {
         </Link>
         <Link href="/admin" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
           <ArrowLeft size={16} />
-          Back
+          {t.back}
         </Link>
       </div>
 
       <section className="mx-auto max-w-7xl py-10">
-        <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Admin CRM</p>
-        <h1 className="mt-2 text-3xl font-bold sm:text-5xl">Deals Pipeline</h1>
-        <p className="mt-3 text-sm text-white/[0.55]">Full internal pipeline grouped by deal status.</p>
+        <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">{t.crm}</p>
+        <h1 className="mt-2 text-3xl font-bold sm:text-5xl">{t.title}</h1>
+        <p className="mt-3 text-sm text-white/[0.55]">{t.subtitle}</p>
       </section>
 
       {dealsError ? (
@@ -138,12 +186,12 @@ export default function AdminDealsPage() {
 
       {isLoadingDeals ? (
         <section className="mx-auto max-w-7xl pb-10">
-          <p className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 text-sm text-white/[0.58] shadow-glass backdrop-blur-xl">Loading deals...</p>
+          <p className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 text-sm text-white/[0.58] shadow-glass backdrop-blur-xl">{t.loading}</p>
         </section>
       ) : deals.length === 0 ? (
         <section className="mx-auto max-w-7xl pb-10">
           <p className="rounded-3xl border border-white/10 bg-white/[0.055] p-5 text-sm text-white/[0.58] shadow-glass backdrop-blur-xl">
-            No deals yet. Create your first deal to start tracking revenue.
+            {t.empty}
           </p>
         </section>
       ) : null}
@@ -157,7 +205,7 @@ export default function AdminDealsPage() {
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CreditCard size={17} className="text-neon" />
-                  <h2 className="text-sm font-semibold capitalize">{status}</h2>
+                  <h2 className="text-sm font-semibold capitalize">{t.statuses[status]}</h2>
                 </div>
                 <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs text-white/[0.5]">{statusDeals.length}</span>
               </div>
@@ -166,7 +214,7 @@ export default function AdminDealsPage() {
                   statusDeals.map((deal) => {
                     const customerName = deal.business_profile_id
                       ? customerNames[deal.business_profile_id] || deal.business_profile_id
-                      : "No customer";
+                      : t.noCustomer;
 
                     return (
                       <Link
@@ -177,14 +225,14 @@ export default function AdminDealsPage() {
                         <p className="text-sm font-semibold text-white">{deal.title || deal.id}</p>
                         <p className="mt-1 text-xs text-white/[0.5]">{customerName}</p>
                         <p className="mt-3 text-sm font-semibold text-white/[0.72]">{deal.total_amount ?? "0"} {deal.currency || "EUR"}</p>
-                        <p className="mt-1 text-xs text-white/[0.42]">Status: {getDealStatus(deal.status)}</p>
-                        <p className="mt-1 text-xs text-white/[0.42]">Payment: {deal.payment_status || "pending"}</p>
-                        <p className="mt-1 text-xs text-white/[0.42]">{deal.created_at ? new Date(deal.created_at).toLocaleDateString() : "No date"}</p>
+                        <p className="mt-1 text-xs text-white/[0.42]">{t.status}: {t.statuses[getDealStatus(deal.status)]}</p>
+                        <p className="mt-1 text-xs text-white/[0.42]">{t.payment}: {deal.payment_status || t.pending}</p>
+                        <p className="mt-1 text-xs text-white/[0.42]">{deal.created_at ? new Date(deal.created_at).toLocaleDateString() : t.noDate}</p>
                       </Link>
                     );
                   })
                 ) : (
-                  <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs text-white/[0.42]">No deals</p>
+                  <p className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs text-white/[0.42]">{t.noDeals}</p>
                 )}
               </div>
             </div>

@@ -41,6 +41,16 @@ type OnboardingExtraction = Required<
 > &
   Omit<ExtractedProfile, "summary_for_dashboard" | "ready_for_dashboard">;
 
+type OnboardingState =
+  | "opening"
+  | "business_discovery"
+  | "problem_discovery"
+  | "context_enrichment"
+  | "contact_capture"
+  | "diagnosis"
+  | "pre_close"
+  | "ready_for_dashboard";
+
 function safeString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -576,122 +586,293 @@ function parseOnboardingExtraction(content: string): OnboardingExtraction {
   }
 }
 
-function getFollowUpReply(profile: ExtractedProfile, conversationText: string) {
-  const language = profile.onboarding_language;
-  const userIsUnsure = hasUnknownAnswer(conversationText);
+function getLastUserTextFromMessages(messages: { role?: unknown; content?: unknown }[]) {
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((item) => safeString(item.role) === "user" && safeString(item.content));
 
-  if (!safeString(profile.industry)) {
-    if (language === "fa") {
-      return "خوشحالم که اینجا هستی. برای اینکه درست کمکت کنم، فقط از پایه شروع کنیم: چه نوع کسب‌وکاری داری و معمولاً چه چیزی می‌فروشی؟";
-    }
+  return safeString(lastUserMessage?.content);
+}
 
-    if (language === "de") {
-      return "Schön, dass du hier bist. Damit ich dich wirklich gut einschätzen kann: Was für ein Geschäft hast du, und was verkaufst du normalerweise?";
-    }
+function hasPositiveTransitionIntent(text: string) {
+  return includesAny(text, [
+    "yes",
+    "yeah",
+    "ok",
+    "okay",
+    "ready",
+    "let's go",
+    "go ahead",
+    "open dashboard",
+    "بله",
+    "آره",
+    "اره",
+    "اوکی",
+    "باشه",
+    "بریم",
+    "آماده",
+    "داشبورد",
+    "ja",
+    "gerne",
+    "weiter",
+    "bereit",
+    "dashboard",
+  ]);
+}
 
-    return "Glad you’re here. To understand the business properly first: what kind of business do you run, and what do you usually sell?";
-  }
+function hasDiagnosisMoment(text: string) {
+  return includesAny(text, [
+    "حسی که دارم",
+    "به نظر میاد",
+    "مشکل اصلی",
+    "diagnosis",
+    "what i’m seeing",
+    "what i'm seeing",
+    "it looks like",
+    "mein eindruck",
+    "ich sehe",
+    "das eigentliche problem",
+  ]);
+}
 
-  if (isGenericBusinessName(profile.business_name)) {
-    if (language === "fa") {
-      return "خوبه، تصویر اولیه را گرفتم. اسم کسب‌وکارت یا برندت چیه؟ اگر هنوز اسم مشخصی نداره، همین را هم بگو و جلو می‌ریم.";
-    }
+function getMissingOnboardingFields(profile: ExtractedProfile, conversationText: string) {
+  const missing: string[] = [];
 
-    if (language === "de") {
-      return "Gut, ich habe ein erstes Bild. Wie heißt dein Geschäft oder deine Marke? Wenn der Name noch nicht feststeht, ist das auch okay.";
-    }
-
-    return "Good, I have the first picture. What’s the name of your business or brand? If it does not have a fixed name yet, that’s okay too.";
-  }
+  if (!safeString(profile.industry)) missing.push("industry");
+  if (isGenericBusinessName(profile.business_name)) missing.push("business_identity");
+  if (!safeString(profile.main_growth_problem)) missing.push("main_growth_problem");
 
   if (!safeString(profile.location)) {
-    if (language === "fa") {
-      return "این مهمه چون مسیر رشد مخصوصاً برای کسب‌وکارهای محلی خیلی به موقعیت بستگی دارد. در کدام شهر فعالیت می‌کنی؟ اگر راحتی، محله یا محدوده را هم بگو.";
-    }
-
-    if (language === "de") {
-      return "Das ist wichtig, weil lokales Wachstum stark vom Standort abhängt. In welcher Stadt arbeitest du? Wenn es für dich passt, auch gern Stadtteil oder Gebiet.";
-    }
-
-    return "That matters because local growth depends heavily on location. Which city do you serve? If you’re comfortable, share the neighborhood or area too.";
+    missing.push("location");
   }
 
   if (isLocalBusiness(profile) && !safeString(profile.address_or_area)) {
-    if (language === "fa") {
-      return "برای بازاریابی محلی، محله یا محدوده اطراف کسب‌وکار خیلی تعیین‌کننده است. اگر راحتی، محدوده یا آدرس تقریبی را هم بگو.";
-    }
-
-    if (language === "de") {
-      return "Für lokales Marketing ist die direkte Umgebung sehr wichtig. Wenn du dich damit wohlfühlst, teile gern den Stadtteil oder eine ungefähre Adresse.";
-    }
-
-    return "For local marketing, the nearby area matters a lot. If you’re comfortable, share the neighborhood or approximate address.";
-  }
-
-  if (!safeString(profile.main_growth_problem)) {
-    if (language === "fa") {
-      return userIsUnsure
-        ? "مشکلی نیست اگر هنوز دقیق نمی‌دانی. از بین این‌ها کدام بیشتر شبیه وضعیت توست: مشتری جدید کم است، مردم تو را پیدا نمی‌کنند، یا کسانی که می‌آیند خرید نمی‌کنند؟"
-        : "الان بیشتر کجای رشد گیر کرده‌ای: دیده‌شدن، گرفتن مشتری جدید، تبدیل مخاطب به مشتری، یا برگشت دوباره مشتری‌ها؟";
-    }
-
-    if (language === "de") {
-      return userIsUnsure
-        ? "Kein Problem, wenn es noch nicht ganz klar ist. Was trifft eher zu: zu wenig neue Kunden, zu wenig Sichtbarkeit oder zu wenige Abschlüsse?"
-        : "Was fühlt sich im Wachstum gerade am meisten festgefahren an: Aufmerksamkeit, neue Leads, Abschlüsse oder wiederkehrende Kunden?";
-    }
-
-    return userIsUnsure
-      ? "No problem if it is not fully clear yet. Which feels closest: not enough new customers, not enough visibility, or people show interest but do not convert?"
-      : "What feels most stuck right now: getting attention, getting leads, converting people, or keeping customers?";
-  }
-
-  if (!safeString(profile.customer_name)) {
-    if (language === "fa") {
-      return "برای اینکه گفت‌وگو شخصی‌تر و دقیق‌تر بماند، دوست داری با چه اسمی صدایت کنم؟";
-    }
-
-    if (language === "de") {
-      return "Damit ich das Gespräch persönlicher und klarer führen kann: Wie darf ich dich ansprechen?";
-    }
-
-    return "So I can keep this personal and clear, what should I call you?";
-  }
-
-  if (!safeString(profile.phone_number) && !hasPhoneRefusal(conversationText) && !hasAskedPhone(conversationText)) {
-    if (language === "fa") {
-      return "اگر دوست داری، می‌توانی شماره تماس هم بگذاری. فقط برای این است که اگر یک تماس کوتاه انسانی واقعاً کمک کند، یکی از اعضای تیم با تو هماهنگ شود. اگر راحت نیستی، مشکلی نیست و ادامه می‌دهیم.";
-    }
-
-    if (language === "de") {
-      return "Wenn du möchtest, kannst du auch eine Telefonnummer teilen. Sie ist nur dafür da, damit ein menschlicher Teamkollege dich kontaktieren kann, falls ein kurzer Anruf helfen würde. Wenn du sie nicht teilen möchtest, ist das völlig okay.";
-    }
-
-    return "If you’d like, you can also share a phone number. It’s only so one of our human teammates can contact you if a quick call would help. If you’d rather not, that’s completely fine.";
+    missing.push("address_or_area");
   }
 
   if (!hasOnlinePresence(profile)) {
+    missing.push("online_presence");
+  }
+
+  const phoneHandled =
+    Boolean(extractPhoneNumber(profile.phone_number)) ||
+    hasPhoneRefusal(conversationText) ||
+    hasAskedPhone(conversationText);
+
+  if (!phoneHandled) missing.push("phone_number_optional");
+
+  return missing;
+}
+
+function calculateLeadScore(profile: ExtractedProfile, conversationText: string) {
+  const phoneHandled =
+    Boolean(extractPhoneNumber(profile.phone_number)) ||
+    hasPhoneRefusal(conversationText) ||
+    hasAskedPhone(conversationText);
+
+  const score =
+    10 +
+    (safeString(profile.industry) ? 10 : 0) +
+    (!isGenericBusinessName(profile.business_name) ? 10 : 0) +
+    (safeString(profile.location) ? 10 : 0) +
+    (safeString(profile.address_or_area) ? 5 : 0) +
+    (safeString(profile.main_growth_problem) ? 20 : 0) +
+    (safeString(profile.customer_name) ? 5 : 0) +
+    (phoneHandled ? 10 : 0) +
+    (hasOnlinePresence(profile) ? 15 : 0) +
+    (profile.decision_readiness === "ready_to_buy" ? 15 : profile.decision_readiness === "interested" ? 8 : 0) +
+    (profile.urgency_level === "high" ? 10 : profile.urgency_level === "medium" ? 5 : 0);
+
+  return Math.min(100, score);
+}
+
+function determineOnboardingState(
+  profile: ExtractedProfile,
+  conversationText: string,
+  savedState?: string | null,
+  lastUserMessage?: string
+): OnboardingState {
+  const latestUserText = safeString(lastUserMessage);
+
+  if (!safeString(profile.industry) || isGenericBusinessName(profile.business_name)) {
+    return "business_discovery";
+  }
+
+  if (!safeString(profile.main_growth_problem)) {
+    return "problem_discovery";
+  }
+
+  if (
+    !safeString(profile.location) ||
+    (isLocalBusiness(profile) && !safeString(profile.address_or_area)) ||
+    !hasOnlinePresence(profile)
+  ) {
+    return "context_enrichment";
+  }
+
+  const phoneHandled =
+    Boolean(extractPhoneNumber(profile.phone_number)) ||
+    hasPhoneRefusal(conversationText) ||
+    hasAskedPhone(conversationText);
+
+  if (!phoneHandled) {
+    return "contact_capture";
+  }
+
+  if (!hasDiagnosisMoment(conversationText)) {
+    return "diagnosis";
+  }
+
+  if (
+    savedState === "pre_close" &&
+    hasPositiveTransitionIntent(latestUserText) &&
+    isReadyForDashboard(profile, conversationText)
+  ) {
+    return "ready_for_dashboard";
+  }
+
+  if (
+    savedState === "ready_for_dashboard" &&
+    isReadyForDashboard(profile, conversationText)
+  ) {
+    return "ready_for_dashboard";
+  }
+
+  return "pre_close";
+}
+
+function getFollowUpReply(
+  profile: ExtractedProfile,
+  conversationText: string,
+  savedState?: string | null,
+  lastUserMessage?: string
+) {
+  const state = determineOnboardingState(profile, conversationText, savedState, lastUserMessage);
+  const language = profile.onboarding_language;
+  const userIsUnsure = hasUnknownAnswer(conversationText);
+
+  if (state === "business_discovery") {
     if (language === "fa") {
-      return "خوب متوجه شدم. مشتری‌ها الان معمولاً از کجا پیدایت می‌کنند؟ مثلاً اینستاگرام، گوگل، سایت، تبلیغات یا بیشتر معرفی و آشنایی؟";
+      return "خوشحالم اینجایی. بیایم ساده شروع کنیم: چه نوع کسب‌وکاری داری، اسمش چیه، و معمولاً چه چیزی می‌فروشی؟ اگر اسم برند هنوز قطعی نیست، همون رو هم بگو.";
     }
 
     if (language === "de") {
-      return "Verstanden. Wo finden dich Kunden aktuell meistens: Instagram, Google, Website, Ads oder eher Empfehlungen?";
+      return "Schön, dass du hier bist. Lass uns einfach anfangen: Was für ein Geschäft hast du, wie heißt es, und was verkaufst du normalerweise? Wenn der Name noch nicht final ist, ist das auch okay.";
     }
 
-    return "That makes sense. Where do customers currently find you: Instagram, Google, a website, ads, or mostly word of mouth?";
+    return "Glad you’re here. Let’s start simply: what kind of business do you run, what is it called, and what do you usually sell? If the brand name is not final yet, that’s okay too.";
   }
 
-  if (language === "fa") {
-    return getCompletionReply(profile);
+  if (state === "problem_discovery") {
+    if (language === "fa") {
+      return userIsUnsure
+        ? "اشکالی نداره اگر هنوز دقیق نمی‌دونی. از بین این‌ها کدوم بیشتر شبیه وضعیتته: مشتری جدید کم داری، دیده نمی‌شی، آدم‌ها می‌پرسن ولی تبدیل نمی‌شن، یا مشتری‌ها برنمی‌گردن؟"
+        : "حالا بگو دقیقاً کجای رشد بیشتر گیر کرده‌ای: دیده‌شدن، گرفتن مشتری جدید، تبدیل مخاطب به مشتری، یا برگشت دوباره مشتری‌ها؟";
+    }
+
+    if (language === "de") {
+      return userIsUnsure
+        ? "Kein Problem, wenn es noch nicht ganz klar ist. Was passt eher: zu wenig neue Kunden, zu wenig Sichtbarkeit, Interesse ohne Abschlüsse oder zu wenig Wiederkehr?"
+        : "Wo hängt dein Wachstum gerade am stärksten: Sichtbarkeit, neue Kunden, Abschlüsse oder wiederkehrende Kunden?";
+    }
+
+    return userIsUnsure
+      ? "No problem if it is not fully clear yet. Which feels closest: not enough new customers, not enough visibility, interest without conversion, or customers not coming back?"
+      : "Where does growth feel most stuck right now: visibility, new customers, conversion, or repeat customers?";
   }
 
-  if (language === "de") {
-    return getCompletionReply(profile);
+  if (state === "context_enrichment") {
+    const needsLocation = !safeString(profile.location);
+    const needsArea = isLocalBusiness(profile) && !safeString(profile.address_or_area);
+    const needsOnlinePresence = !hasOnlinePresence(profile);
+
+    if (language === "fa") {
+      if (needsLocation) {
+        return "برای اینکه مسیر رشد واقعی باشه، باید بدونم کجا فعالیت می‌کنی. کسب‌وکارت تو کدوم شهره؟";
+      }
+
+      if (needsArea) {
+        return "چون کسب‌وکارت محلیه، محدوده خیلی مهمه. اگر راحتی، محله یا آدرس تقریبی رو هم بگو تا مسیر جذب مشتری دقیق‌تر بشه.";
+      }
+
+      if (needsOnlinePresence) {
+        return "خوبه، حالا می‌خوام بفهمم مشتری‌ها الان از کجا پیدات می‌کنن. اینستاگرام، گوگل، سایت، تبلیغات، یا بیشتر معرفی و آشنایی؟";
+      }
+    }
+
+    if (language === "de") {
+      if (needsLocation) {
+        return "Damit der Wachstumsweg realistisch wird: In welcher Stadt ist dein Geschäft aktiv?";
+      }
+
+      if (needsArea) {
+        return "Da dein Geschäft lokal ist, ist die Umgebung sehr wichtig. Wenn du möchtest, teile auch den Stadtteil oder eine ungefähre Adresse.";
+      }
+
+      if (needsOnlinePresence) {
+        return "Gut, jetzt möchte ich verstehen, wo Kunden dich aktuell finden: Instagram, Google, Website, Ads oder eher Empfehlungen?";
+      }
+    }
+
+    if (needsLocation) {
+      return "To make the growth path realistic, I need to know where you operate. Which city is your business in?";
+    }
+
+    if (needsArea) {
+      return "Because your business is local, the nearby area matters. If you’re comfortable, share the neighborhood or approximate address too.";
+    }
+
+    return "Good. Now I want to understand where customers currently find you: Instagram, Google, website, ads, or mostly referrals?";
+  }
+
+  if (state === "contact_capture") {
+    if (language === "fa") {
+      return "یه نکته کوچک هم هست. اگر راحتی، می‌تونی شماره موبایلت رو هم بدی. فقط برای اینه که اگر یک تماس کوتاه واقعاً کمک‌کننده باشه، یکی از اعضای تیم انسانی باهات هماهنگ کنه. اگر دوست نداری، کاملاً اوکیه و همینجا ادامه می‌دیم.";
+    }
+
+    if (language === "de") {
+      return "Noch ein kleiner Punkt: Wenn du möchtest, kannst du deine Telefonnummer teilen. Nur falls ein kurzer menschlicher Austausch wirklich hilfreich wäre. Wenn nicht, ist das völlig okay und wir machen hier weiter.";
+    }
+
+    return "One small thing: if you’re comfortable, you can share your phone number. It’s only so a human teammate can contact you if a quick call would genuinely help. If not, that’s completely fine and we’ll continue here.";
+  }
+
+  if (state === "diagnosis") {
+    return getDiagnosisReply(profile);
+  }
+
+  if (state === "pre_close") {
+    if (language === "fa") {
+      return "الان تصویر اولیه خوبی دارم. هنوز لازم نیست همه‌چیز کامل باشه؛ مهم اینه که مسیر اول رو درست بچینیم. من می‌تونم داشبورد رشدت رو آماده کنم و اونجا مرحله بعدی رو دقیق‌تر با هم جلو ببریم. اگر آماده‌ای، بگو بریم تا داشبوردت رو باز کنیم.";
+    }
+
+    if (language === "de") {
+      return "Ich habe jetzt ein gutes erstes Bild. Es muss noch nicht alles perfekt sein; wichtig ist, den ersten sinnvollen Weg zu bauen. Ich kann dein Growth Dashboard vorbereiten und wir schärfen die nächsten Schritte dort weiter. Wenn du bereit bist, sag einfach weiter.";
+    }
+
+    return "I have a good first picture now. It does not need to be perfect yet; what matters is building the first clear path. I can prepare your growth dashboard and we’ll sharpen the next steps there. If you’re ready, tell me and we’ll open it.";
   }
 
   return getCompletionReply(profile);
 }
+
+function getDiagnosisReply(profile: ExtractedProfile) {
+  const language = profile.onboarding_language;
+  const industry = safeString(profile.industry) || "business";
+  const location = safeString(profile.location);
+  const problem = safeString(profile.main_growth_problem);
+
+  if (language === "fa") {
+    return `حسی که دارم اینه که مسئله فقط «${problem || "رشد"}» نیست؛ برای ${industry}${location ? ` در ${location}` : ""}، مشکل اصلی احتمالاً اینه که هنوز مسیر منظمی بین دیده‌شدن، اعتمادسازی و تبدیل آدم‌ها به مشتری ساخته نشده.\n\nاین خبر بدی نیست؛ اتفاقاً یعنی اگر مسیر درست بچینیم، می‌تونیم از یک نقطه مشخص شروع کنیم و نتیجه رو قابل اندازه‌گیری کنیم.`;
+  }
+
+  if (language === "de") {
+    return `Mein Eindruck ist: Es geht nicht nur um „${problem || "Wachstum"}“. Für ${industry}${location ? ` in ${location}` : ""} liegt der Kern wahrscheinlich darin, dass Sichtbarkeit, Vertrauen und Kundengewinnung noch nicht sauber miteinander verbunden sind.\n\nDas ist kein schlechtes Zeichen. Es bedeutet, dass wir mit einem klaren ersten Schritt echte Struktur aufbauen können.`;
+  }
+
+  return `What I’m seeing is this: it is not only about “${problem || "growth"}.” For a ${industry}${location ? ` in ${location}` : ""}, the real issue is probably that visibility, trust, and customer conversion are not connected into one clear path yet.\n\nThat is not bad news. It means we can start with one focused direction and make progress measurable.`;
+}
+
 
 function getCompletionReply(profile: ExtractedProfile) {
   const summary = safeString(profile.summary_for_dashboard);
@@ -768,6 +949,8 @@ export async function POST(req: Request) {
       .limit(1)
       .maybeSingle();
 
+    const savedState = safeString(existingProfile?.onboarding_state) || null;
+
     if (profileCheckError) {
       console.error("ONBOARDING EXISTING PROFILE CHECK ERROR", profileCheckError);
       return NextResponse.json(
@@ -823,11 +1006,24 @@ export async function POST(req: Request) {
         phone_number: initialMessageClassification.phoneNumber,
         onboarding_language: phoneLanguage,
       };
+      const phoneState = determineOnboardingState(
+        phoneProfile,
+        conversationTextForPhone,
+        savedState,
+        lastUserMessage
+      );
+      const phoneMissingFields = getMissingOnboardingFields(phoneProfile, conversationTextForPhone);
       const phonePayload = {
         user_id: userId,
         business_name: safeString(existingProfile?.business_name) || "New ALYN workspace",
         phone_number: initialMessageClassification.phoneNumber,
         onboarding_language: phoneLanguage,
+        onboarding_state: phoneState,
+        missing_fields: phoneMissingFields,
+        lead_score: calculateLeadScore(phoneProfile, conversationTextForPhone),
+        last_onboarding_intent: phoneState,
+        diagnosis_done: phoneState === "pre_close" || phoneState === "ready_for_dashboard",
+        pre_close_done: phoneState === "ready_for_dashboard",
       };
 
       console.log("ONBOARDING PHONE SAVE PAYLOAD", phonePayload);
@@ -838,10 +1034,7 @@ export async function POST(req: Request) {
       if (existingProfile?.id) {
         const { data: updatedProfile, error: updatePhoneError } = await supabase
           .from("business_profiles")
-          .update({
-            phone_number: initialMessageClassification.phoneNumber,
-            onboarding_language: existingProfile.onboarding_language || phoneLanguage,
-          })
+          .update(phonePayload)
           .eq("id", existingProfile.id)
           .select("*")
           .single();
@@ -877,7 +1070,7 @@ export async function POST(req: Request) {
 
       const nextAssistantReply = phoneSaveError
         ? getPhoneSaveFailureReply(phoneLanguage)
-        : `${getPhoneThanksReply(phoneProfile)}\n\n${getFollowUpReply(phoneProfile, conversationTextForPhone)}`;
+        : `${getPhoneThanksReply(phoneProfile)}\n\n${getFollowUpReply(phoneProfile, conversationTextForPhone, phoneState, lastUserMessage)}`;
 
       const { data: insertedAssistantMessage, error: assistantMessageError } = await supabase
         .from("ai_messages")
@@ -1043,13 +1236,26 @@ Rules:
       ready_for_dashboard: Boolean(extraction.ready_for_dashboard),
       summary_for_dashboard: safeString(extraction.summary_for_dashboard),
     };
+    const onboardingState = determineOnboardingState(
+      extractedProfile,
+      conversationText,
+      savedState,
+      lastUserMessage
+    );
+    const missingFields = getMissingOnboardingFields(extractedProfile, conversationText);
+    const leadScore = calculateLeadScore(extractedProfile, conversationText);
+
     extractedProfile.ready_for_dashboard =
-      Boolean(extraction.ready_for_dashboard) && isReadyForDashboard(extractedProfile, conversationText);
+      onboardingState === "ready_for_dashboard" && isReadyForDashboard(extractedProfile, conversationText);
+
     console.log("EXTRACTED_ONBOARDING_PROFILE", extractedProfile);
+    console.log("ONBOARDING_STATE", onboardingState);
+    console.log("ONBOARDING_MISSING_FIELDS", missingFields);
+    console.log("ONBOARDING_LEAD_SCORE", leadScore);
     const nextAssistantReply =
       extractedProfile.ready_for_dashboard
         ? getCompletionReply(extractedProfile)
-        : getFollowUpReply(extractedProfile, conversationText);
+        : getFollowUpReply(extractedProfile, conversationText, onboardingState, lastUserMessage);
     const assistantReply = initialMessageClassification.phoneNumber
       ? `${getPhoneThanksReply(extractedProfile)}\n\n${nextAssistantReply}`
       : nextAssistantReply;
@@ -1057,7 +1263,7 @@ Rules:
     let businessProfile = null;
     const monthlyMarketingBudget = extractedBudget;
 
-    if (extractedProfile.ready_for_dashboard) {
+    if (true) {
       const businessProfilePayload = {
         user_id: userId,
         business_name: safeString(extractedProfile.business_name) || "New ALYN workspace",
@@ -1069,6 +1275,14 @@ Rules:
         monthly_marketing_budget: monthlyMarketingBudget,
         phone_number: extractPhoneNumber(extractedProfile.phone_number),
         onboarding_language: extractedProfile.onboarding_language,
+        address_or_area: safeString(extractedProfile.address_or_area) || null,
+        instagram_handle: extractInstagramHandle(extractedProfile.instagram_handle),
+        onboarding_state: onboardingState,
+        missing_fields: missingFields,
+        lead_score: leadScore,
+        last_onboarding_intent: onboardingState,
+        diagnosis_done: onboardingState === "pre_close" || onboardingState === "ready_for_dashboard",
+        pre_close_done: onboardingState === "ready_for_dashboard",
       };
 
       console.log("ONBOARDING BUSINESS PROFILE PAYLOAD", businessProfilePayload);
@@ -1131,7 +1345,7 @@ Rules:
 
     return NextResponse.json({
       reply: assistantReply,
-      profileCreated: Boolean(businessProfile),
+      profileCreated: Boolean(businessProfile) && extractedProfile.ready_for_dashboard,
       businessProfile,
       extractedProfile,
       userMessage: insertedUserMessage,

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAppLanguage } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 import { BrandLogo } from "../../BrandLogo";
 import {
@@ -301,10 +303,18 @@ const isRecommendedCategory = (category: StoreCategory, profile: BusinessProfile
   return false;
 };
 
-function StoreSidebar() {
+function StoreSidebar({
+  labels,
+  language,
+  onLanguageChange
+}: {
+  labels: { overview: string; growthStore: string; liveSystem: string };
+  language: "de" | "en";
+  onLanguageChange: (language: "de" | "en") => void;
+}) {
   const items = [
-    { label: "Overview", href: "/dashboard", icon: Sparkles, active: false },
-    { label: "Growth Store", href: "/dashboard/store", icon: Zap, active: true }
+    { label: labels.overview, href: "/dashboard", icon: Sparkles, active: false },
+    { label: labels.growthStore, href: "/dashboard/store", icon: Zap, active: true }
   ];
 
   return (
@@ -313,9 +323,14 @@ function StoreSidebar() {
         <Link href="/" className="flex items-center gap-3" aria-label="ALYN AI home">
           <BrandLogo />
         </Link>
-        <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200 lg:mt-8 lg:inline-flex">
-          Live system
-        </span>
+        <div className="flex items-center gap-2 lg:mt-8 lg:block">
+          <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200 lg:inline-flex">
+            {labels.liveSystem}
+          </span>
+          <div className="mt-0 lg:mt-3">
+            <LanguageSwitcher language={language} onChange={onLanguageChange} />
+          </div>
+        </div>
       </div>
 
       <nav className="mt-5 flex gap-2 overflow-x-auto lg:mt-10 lg:flex-col lg:overflow-visible">
@@ -338,13 +353,21 @@ function StoreSidebar() {
   );
 }
 
-function StoreTopbar({ businessName, onLogout }: { businessName: string; onLogout: () => void }) {
+function StoreTopbar({
+  businessName,
+  onLogout,
+  labels
+}: {
+  businessName: string;
+  onLogout: () => void;
+  labels: { dashboard: string; growthStore: string; logout: string; user: string };
+}) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0f1a]/70 px-4 py-4 backdrop-blur-xl sm:px-6 lg:ml-72 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Dashboard</p>
-          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Growth Store</h1>
+          <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">{labels.dashboard}</p>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">{labels.growthStore}</h1>
           {businessName ? <p className="mt-1 text-sm text-white/[0.5]">{businessName}</p> : null}
         </div>
         <div className="flex items-center gap-3">
@@ -352,10 +375,10 @@ function StoreTopbar({ businessName, onLogout }: { businessName: string; onLogou
             <span className="grid h-8 w-8 place-items-center rounded-full bg-neon text-white">
               <User size={16} />
             </span>
-            <span className="text-sm font-semibold">{businessName || "User"}</span>
+            <span className="text-sm font-semibold">{businessName || labels.user}</span>
           </span>
           <button onClick={onLogout} className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-semibold text-white/[0.72] transition hover:bg-white/[0.09] hover:text-white">
-            Logout
+            {labels.logout}
           </button>
         </div>
       </div>
@@ -365,6 +388,33 @@ function StoreTopbar({ businessName, onLogout }: { businessName: string; onLogou
 
 export default function GrowthStorePage() {
   const router = useRouter();
+  const { language, setLanguage } = useAppLanguage("de");
+  const t = {
+    de: {
+      overview: "Übersicht",
+      growthStore: "Growth Store",
+      liveSystem: "Live-System",
+      dashboard: "Dashboard",
+      logout: "Abmelden",
+      user: "Nutzer",
+      title: "Upgrade für dein Wachstumssystem",
+      subtitle: "Alles, was du brauchst, um schneller mehr Kunden zu gewinnen",
+      loading: "Dein Growth Store wird geladen...",
+      recommended: "Für dich empfohlen"
+    },
+    en: {
+      overview: "Overview",
+      growthStore: "Growth Store",
+      liveSystem: "Live system",
+      dashboard: "Dashboard",
+      logout: "Logout",
+      user: "User",
+      title: "Upgrade your growth system",
+      subtitle: "Everything you need to get more customers, faster",
+      loading: "Loading your growth store...",
+      recommended: "Recommended for you"
+    }
+  }[language];
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [packages, setPackages] = useState<PackageRow[]>([]);
@@ -502,28 +552,28 @@ export default function GrowthStorePage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] text-white">
-      <StoreSidebar />
-      <StoreTopbar businessName={(profile?.business_name || "").trim()} onLogout={handleLogout} />
+      <StoreSidebar labels={t} language={language} onLanguageChange={setLanguage} />
+      <StoreTopbar businessName={(profile?.business_name || "").trim()} onLogout={handleLogout} labels={t} />
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:ml-72 lg:px-8">
         <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.055] shadow-glass backdrop-blur-xl">
           <div className="bg-gradient-to-br from-neon/[0.22] via-cyan-300/[0.08] to-white/[0.02] p-6 sm:p-8">
             <span className="inline-flex items-center gap-2 rounded-full border border-neon/30 bg-neon/[0.12] px-3 py-1 text-xs font-semibold text-white">
               <Zap size={14} />
-              Growth Store
+              {t.growthStore}
             </span>
             <h2 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">
-              Upgrade your growth system
+              {t.title}
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/[0.62]">
-              Everything you need to get more customers, faster
+              {t.subtitle}
             </p>
           </div>
         </section>
 
         {isLoading ? (
           <div className="rounded-3xl border border-white/10 bg-white/[0.055] p-6 text-sm text-white/[0.62] shadow-glass backdrop-blur-xl">
-            Loading your growth store...
+            {t.loading}
           </div>
         ) : null}
 
@@ -543,7 +593,7 @@ export default function GrowthStorePage() {
                     </span>
                     {recommended ? (
                       <span className="rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-100">
-                        Recommended for you
+                        {t.recommended}
                       </span>
                     ) : null}
                   </div>
