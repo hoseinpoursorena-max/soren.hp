@@ -48,30 +48,36 @@ export default function AboutPage() {
     <main className="min-h-screen overflow-x-hidden bg-[linear-gradient(135deg,#0b0f1a_0%,#12172a_48%,#1a1f3a_100%)] px-4 py-6 text-white sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Logo />
+
         <div className="hidden items-center gap-3 sm:flex">
-          <Link href="/payment" className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/[0.15] bg-white/[0.06] px-4 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
-            Pricing
-          </Link>
-          <Link href="/login" className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
-            Continue with Google
+          <Link
+            href="/login"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]"
+          >
+            Start with ALYN
           </Link>
         </div>
       </div>
 
       <section className="mx-auto grid max-w-7xl items-center gap-10 py-12 lg:grid-cols-[0.95fr_1.05fr] lg:py-20">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-neon">About ALYN</p>
-          <h1 className="text-4xl font-bold leading-tight sm:text-6xl">ALYN is a growth execution system</h1>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-neon">
+            About ALYN
+          </p>
+          <h1 className="text-4xl font-bold leading-tight sm:text-6xl">
+            ALYN is a growth execution system
+          </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-white/[0.66]">
             ALYN is not an agency and not just an AI tool. It is built for businesses that need execution, clarity, and growth.
           </p>
+
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/dashboard" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]">
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-neon px-5 text-sm font-semibold text-white shadow-glow transition hover:bg-[#7b73ff]"
+            >
               Dashboard
               <ArrowRight size={17} />
-            </Link>
-            <Link href="/payment" className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/[0.15] bg-white/[0.06] px-5 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
-              Pricing
             </Link>
           </div>
         </div>
@@ -83,14 +89,19 @@ export default function AboutPage() {
             </span>
             <div>
               <h2 className="text-2xl font-bold">AI speed + human strategy</h2>
-              <p className="mt-1 text-sm text-white/[0.55]">Fast execution guided by real direction.</p>
+              <p className="mt-1 text-sm text-white/[0.55]">
+                Fast execution guided by real direction.
+              </p>
             </div>
           </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             {["Plan", "Create", "Launch", "Optimize"].map((item) => (
               <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.045] p-5">
                 <p className="text-xl font-bold">{item}</p>
-                <p className="mt-2 text-sm text-white/[0.55]">Part of one connected growth system.</p>
+                <p className="mt-2 text-sm text-white/[0.55]">
+                  Part of one connected growth system.
+                </p>
               </div>
             ))}
           </div>
@@ -100,7 +111,10 @@ export default function AboutPage() {
       <section className="mx-auto max-w-7xl pb-16">
         <div className="grid gap-5 md:grid-cols-2">
           {sections.map(({ title, copy, icon: Icon }) => (
-            <div key={title} className="rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glass backdrop-blur-xl">
+            <div
+              key={title}
+              className="rounded-[2rem] border border-white/10 bg-white/[0.055] p-6 shadow-glass backdrop-blur-xl"
+            >
               <span className="mb-8 grid h-12 w-12 place-items-center rounded-2xl bg-neon/[0.15] text-neon">
                 <Icon size={22} />
               </span>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { signInWithGoogle } from "@/lib/auth";
 import { BrandLogo } from "./BrandLogo";
 import {
@@ -128,7 +127,11 @@ function Button({
     );
   }
 
-  return <button onClick={onClick} className={className}>{children}</button>;
+  return (
+    <button onClick={onClick} className={className}>
+      {children}
+    </button>
+  );
 }
 
 async function startWithAlyn() {
@@ -146,6 +149,7 @@ function Header() {
         <a href="/" className="flex items-center gap-3" aria-label="ALYN AI home">
           <BrandLogo />
         </a>
+
         <nav className="hidden items-center gap-8 text-sm text-white/70 lg:flex">
           {navItems.map((item) => (
             <a key={item.label} href={item.href} className="transition hover:text-white">
@@ -153,11 +157,15 @@ function Header() {
             </a>
           ))}
         </nav>
+
         <div className="hidden items-center gap-3 sm:flex">
-          <Button onClick={startWithAlyn} variant="secondary">Continue with Google</Button>
           <Button onClick={startWithAlyn}>Start with ALYN</Button>
         </div>
-        <button onClick={startWithAlyn} className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow sm:hidden">
+
+        <button
+          onClick={startWithAlyn}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-neon px-4 text-sm font-semibold text-white shadow-glow sm:hidden"
+        >
           Start
         </button>
       </div>
@@ -182,7 +190,7 @@ function HeroDashboard() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-5">
-          <div className="md:col-span-2 space-y-4">
+          <div className="space-y-4 md:col-span-2">
             <div className="rounded-2xl border border-white/10 bg-white/[0.055] p-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">Business Analysis</span>
@@ -248,8 +256,12 @@ function Hero() {
             ALYN combines AI agents and human strategy to plan, create, launch, and optimize your growth system — without hiring a marketing team.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button onClick={startWithAlyn}>Start with ALYN <ArrowRight size={17} /></Button>
-            <Button href="#how-it-works" variant="secondary">How It Works <ChevronRight size={17} /></Button>
+            <Button onClick={startWithAlyn}>
+              Start with ALYN <ArrowRight size={17} />
+            </Button>
+            <Button href="#how-it-works" variant="secondary">
+              How It Works <ChevronRight size={17} />
+            </Button>
           </div>
         </div>
         <HeroDashboard />
@@ -374,7 +386,7 @@ function DashboardPreview() {
         <SectionHeading title="Your growth, visible in one place." copy="No black-box marketing. See exactly what is happening." />
         <div className="glass overflow-hidden rounded-[2rem] p-4">
           <div className="grid gap-4 rounded-[1.5rem] border border-white/10 bg-[#0d1222]/90 p-4 lg:grid-cols-12">
-            <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 lg:col-span-3">
               <p className="text-xs uppercase tracking-[0.24em] text-white/[0.45]">Project stage</p>
               <h3 className="mt-3 text-2xl font-bold">Scale validation</h3>
               <div className="mt-5 space-y-3">
@@ -386,7 +398,8 @@ function DashboardPreview() {
                 ))}
               </div>
             </div>
-            <div className="lg:col-span-4 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 lg:col-span-4">
               <div className="mb-4 flex items-center gap-2">
                 <ClipboardList size={18} className="text-neon" />
                 <h3 className="font-semibold">Tasks list</h3>
@@ -400,7 +413,8 @@ function DashboardPreview() {
                 ))}
               </div>
             </div>
-            <div className="lg:col-span-5 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 lg:col-span-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <LineChart size={18} className="text-neon" />
@@ -428,7 +442,8 @@ function DashboardPreview() {
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-7 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 lg:col-span-7">
               <div className="mb-4 flex items-center gap-2">
                 <CalendarDays size={18} className="text-neon" />
                 <h3 className="font-semibold">Content calendar</h3>
@@ -442,7 +457,8 @@ function DashboardPreview() {
                 ))}
               </div>
             </div>
-            <div className="lg:col-span-5 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 lg:col-span-5">
               <div className="mb-4 flex items-center gap-2">
                 <Bell size={18} className="text-neon" />
                 <h3 className="font-semibold">Notifications</h3>
@@ -483,7 +499,7 @@ function ServicesGrid() {
 
 function OfferSection() {
   return (
-    <section id="pricing" className="px-4 py-20 sm:px-6 lg:px-8">
+    <section className="px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-white/[0.12] bg-gradient-to-br from-neon/25 via-white/[0.08] to-cyan-300/10 p-8 shadow-glass backdrop-blur-xl sm:p-12">
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
@@ -499,7 +515,9 @@ function OfferSection() {
               </div>
             ))}
             <div className="mt-5">
-              <Button onClick={startWithAlyn}>Start with ALYN <ArrowRight size={17} /></Button>
+              <Button onClick={startWithAlyn}>
+                Start with ALYN <ArrowRight size={17} />
+              </Button>
             </div>
             <p className="mt-4 text-sm text-white/[0.66]">Limited onboarding spots this month.</p>
             <p className="mt-2 text-sm text-white/[0.55]">We only work with a few businesses at a time to ensure performance.</p>
@@ -515,7 +533,9 @@ function FinalCta() {
     <section className="px-4 py-20 text-center sm:px-6 lg:px-8">
       <h2 className="text-4xl font-bold sm:text-6xl">Ready to stop guessing and start growing?</h2>
       <div className="mt-8">
-        <Button onClick={startWithAlyn}>Start with ALYN <ArrowRight size={17} /></Button>
+        <Button onClick={startWithAlyn}>
+          Start with ALYN <ArrowRight size={17} />
+        </Button>
       </div>
     </section>
   );

@@ -587,7 +587,7 @@ export default function AdminTasksPage() {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`min-h-[420px] rounded-3xl border border-white/10 bg-white/[0.055] p-4 shadow-glass ${
+                    className={`flex max-h-[680px] min-h-[420px] flex-col rounded-3xl border border-white/10 bg-white/[0.055] p-4 shadow-glass ${
                       snapshot.isDraggingOver ? "border-neon/50 bg-neon/[0.08]" : ""
                     }`}
                   >
@@ -601,7 +601,7 @@ export default function AdminTasksPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
                       {groupedTasks[status].length > 0 ? (
                         groupedTasks[status].map((task, index) => (
                           <Draggable draggableId={task.id} index={index} key={task.id}>

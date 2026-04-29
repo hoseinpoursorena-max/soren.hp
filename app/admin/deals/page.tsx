@@ -153,7 +153,7 @@ export default function AdminDealsPage() {
           const statusDeals = deals.filter((deal) => getDealStatus(deal.status) === status);
 
           return (
-            <div key={status} className="rounded-3xl border border-white/10 bg-white/[0.055] p-4 shadow-glass backdrop-blur-xl">
+            <div key={status} className="flex max-h-[680px] min-h-[420px] flex-col rounded-3xl border border-white/10 bg-white/[0.055] p-4 shadow-glass backdrop-blur-xl">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CreditCard size={17} className="text-neon" />
@@ -161,7 +161,7 @@ export default function AdminDealsPage() {
                 </div>
                 <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs text-white/[0.5]">{statusDeals.length}</span>
               </div>
-              <div className="space-y-3">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
                 {statusDeals.length > 0 ? (
                   statusDeals.map((deal) => {
                     const customerName = deal.business_profile_id
